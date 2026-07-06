@@ -1,0 +1,28 @@
+$ vite dev --port 1800
+
+  VITE v8.1.3  ready in 1928 ms
+
+  ➜  Local:   http://localhost:1800/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+Using secrets defined in .env
+9:17:22 AM [vite-plugin-svelte] src/routes/+page.svelte:15:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:165:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:10:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:21:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:54:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+9:17:22 AM [vite-plugin-svelte] src/routes/+page.svelte:15:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:165:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:10:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:21:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+9:17:22 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:54:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props

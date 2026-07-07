@@ -7,6 +7,7 @@
 	import SpeakerOffIcon from '$lib/components/icons/speaker-off-icon.svelte';
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import ChatPanel from '$lib/components/chat/ChatPanel.svelte';
+	import NotePanel from '$lib/components/chat/NotePanel.svelte';
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 
 	let voice: VoiceState | undefined = $state();
@@ -80,6 +81,7 @@
 
 		<main class="main">
 			<ChatPanel />
+			<NotePanel />
 		</main>
 	</div>
 

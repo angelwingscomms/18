@@ -1,14 +1,21 @@
 import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
 import { get_tool_declarations } from './gemini-live-dispatcher';
-	import type { ChatMsg } from './types';
+import type { ChatMsg, Note } from './types';
 import { model_options } from './types';
+
+let note_id_counter = 0;
+function new_note_id() { return 'n' + (++note_id_counter); }
 
 const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. When the conversation starts, greet the user.
 
 You have a tool called exa_search that searches the web. ALWAYS use exa_search for any query that might be time-sensitive, period-sensitive, or about recent events, news, prices, weather, dates, releases, or anything that may have changed recently. When in doubt, search.
 
-When you use exa_search and produce a response based on the results, ALWAYS include the phrase "i searched the net" in your response.`;
+When you use exa_search and produce a response based on the results, ALWAYS include the phrase "i searched the net" in your response.
+
+You also have a tool called clear_chat that clears all chat messages. Use it when the user asks you to clear the chat or start over.
+
+You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id.`;
 const KEY = Symbol('voice');
 
 export function set_voice_state(state: VoiceState) {
@@ -59,6 +66,25 @@ export class VoiceState {
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
+	notes = $state<Note[]>(browser ? JSON.parse(localStorage.getItem('notes') || '[]') : []);
+	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
+	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
+
+	get active_note(): Note | undefined {
+		return this.notes.find(n => n.id === this.active_note_id);
+	}
+
+	get note_content(): string {
+		return this.active_note?.content ?? '';
+	}
+
+	set note_content(val: string) {
+		const n = this.active_note;
+		if (n) {
+			n.content = val;
+			this.notes = [...this.notes];
+		}
+	}
 
 	show_settings = $state(false);
 	show_voice_menu = $state(false);
@@ -68,6 +94,16 @@ export class VoiceState {
 	toast_id = $state(0);
 
 	constructor() {
+		note_id_counter = Math.max(0, ...this.notes.map(n => {
+			const m = n.id.match(/^n(\d+)$/);
+			return m ? parseInt(m[1], 10) : 0;
+		}));
+		if (this.notes.length === 0) {
+			this.notes = [{ id: new_note_id(), title: 'Note', content: '' }];
+		}
+		if (!this.active_note_id || !this.notes.find(n => n.id === this.active_note_id)) {
+			this.active_note_id = this.notes[0].id;
+		}
 		$effect(() => {
 			return () => { this.cleanup(); };
 		});
@@ -91,6 +127,15 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('exa_key', this.exa_key);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('notes', JSON.stringify(this.notes));
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('active_note_id', this.active_note_id);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('show_note', String(this.show_note));
 		});
 		$effect(() => {
 			const g = this.voice_gain;
@@ -384,6 +429,81 @@ export class VoiceState {
 		} catch {}
 	}
 
+	note_for_id(note_id?: string): Note | undefined {
+		if (note_id) return this.notes.find(n => n.id === note_id);
+		return this.active_note;
+	}
+
+	read_note(note_id?: string, offset = 1, limit = 2000): string {
+		const note = this.note_for_id(note_id);
+		if (!note) return 'Error: Note not found.';
+		const lines = note.content.split('\n');
+		const start = Math.max(0, offset - 1);
+		const sliced = lines.slice(start, start + limit);
+		const total = lines.length;
+		const last = start + sliced.length;
+		let out = `Note: "${note.title}"\n`;
+		out += sliced.map((line, i) => `${start + i + 1}: ${line}`).join('\n');
+		if (last < total) out += `\n(Showing lines ${offset}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
+		else out += `\n(End - total ${total} lines)`;
+		return out;
+	}
+
+	edit_note(oldString: string, newString: string, replaceAll = false, note_id?: string): string {
+		const note = this.note_for_id(note_id);
+		if (!note) return 'Error: Note not found.';
+		if (oldString === '') {
+			note.content = note.content + newString;
+			this.notes = [...this.notes];
+			return 'Appended to note.';
+		}
+		const content = note.content;
+		if (replaceAll) {
+			const count = content.split(oldString).length - 1;
+			if (count === 0) return 'Error: oldString not found in note.';
+			note.content = content.split(oldString).join(newString);
+			this.notes = [...this.notes];
+			return `Replaced ${count} occurrence(s) in note.`;
+		}
+		const first = content.indexOf(oldString);
+		if (first === -1) return 'Error: oldString not found in note.';
+		const last_c = content.lastIndexOf(oldString);
+		if (first !== last_c) return 'Error: Found multiple matches. Use replaceAll or provide more context.';
+		note.content = content.substring(0, first) + newString + content.substring(first + oldString.length);
+		this.notes = [...this.notes];
+		return 'Edited note.';
+	}
+
+	list_notes(): string {
+		return this.notes.map(n => `- ${n.id}: "${n.title}" (${n.content.split('\n').length} lines)${n.id === this.active_note_id ? ' [active]' : ''}`).join('\n');
+	}
+
+	add_note(title = 'Note', content = ''): string {
+		const id = new_note_id();
+		this.notes = [...this.notes, { id, title, content }];
+		this.active_note_id = id;
+		return `Created note "${title}" (id: ${id}).`;
+	}
+
+	delete_note(note_id: string): string {
+		const idx = this.notes.findIndex(n => n.id === note_id);
+		if (idx === -1) return 'Error: Note not found.';
+		if (this.notes.length <= 1) return 'Error: Cannot delete the last note.';
+		this.notes = this.notes.filter(n => n.id !== note_id);
+		if (this.active_note_id === note_id) {
+			this.active_note_id = this.notes[0].id;
+		}
+		return 'Deleted note.';
+	}
+
+	rename_note(title: string, note_id?: string): string {
+		const note = this.note_for_id(note_id);
+		if (!note) return 'Error: Note not found.';
+		note.title = title;
+		this.notes = [...this.notes];
+		return `Renamed note to "${title}".`;
+	}
+
 	gemini_live_handle(msg: any) {
 		if (msg.serverContent) {
 			console.log('[voice] serverContent:', JSON.stringify({ ...msg.serverContent, modelTurn: msg.serverContent.modelTurn ? { parts: msg.serverContent.modelTurn.parts?.map((p: any) => ({ ...p, inlineData: p.inlineData ? { mimeType: p.inlineData.mimeType, data: p.inlineData.data?.slice(0, 50) + '...' } : undefined })) } : undefined }));
@@ -414,6 +534,40 @@ export class VoiceState {
 								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }],
 							});
 						}
+					} else if (fc.name === 'read_note') {
+						const lines = this.read_note(fc.args.note_id, fc.args.offset ?? 1, fc.args.limit ?? 2000);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result: lines } }],
+						});
+					} else if (fc.name === 'edit_note') {
+						const result = this.edit_note(fc.args.oldString ?? '', fc.args.newString ?? '', fc.args.replaceAll ?? false, fc.args.note_id);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+						});
+					} else if (fc.name === 'clear_chat') {
+						this.clearChat();
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Chat cleared.' } }],
+						});
+					} else if (fc.name === 'list_notes') {
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result: this.list_notes() } }],
+						});
+					} else if (fc.name === 'add_note') {
+						const result = this.add_note(fc.args.title, fc.args.content);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+						});
+					} else if (fc.name === 'delete_note') {
+						const result = this.delete_note(fc.args.note_id);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+						});
+					} else if (fc.name === 'rename_note') {
+						const result = this.rename_note(fc.args.title, fc.args.note_id);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+						});
 					}
 				}
 				this.stop_thinking_sound();

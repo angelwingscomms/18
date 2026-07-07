@@ -4,7 +4,11 @@ import { get_tool_declarations } from './gemini-live-dispatcher';
 	import type { ChatMsg } from './types';
 import { model_options } from './types';
 
-const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. You can search the web for current information using Google Search. When the conversation starts, greet the user.`;
+const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. When the conversation starts, greet the user.
+
+You have a tool called exa_search that searches the web. ALWAYS use exa_search for any query that might be time-sensitive, period-sensitive, or about recent events, news, prices, weather, dates, releases, or anything that may have changed recently. When in doubt, search.
+
+When you use exa_search and produce a response based on the results, ALWAYS include the phrase "i searched the net" in your response.`;
 const KEY = Symbol('voice');
 
 export function set_voice_state(state: VoiceState) {
@@ -23,6 +27,7 @@ export class VoiceState {
 	gemini_live_session: any = null;
 	gemini_live_audio_ctx: AudioContext | null = null;
 	gemini_live_audio_gain: GainNode | null = null;
+	gemini_live_voice_gain: GainNode | null = null;
 	gemini_live_mic_stream: MediaStream | null = null;
 	gemini_live_processor: ScriptProcessorNode | null = null;
 	gemini_live_audio_queue: AudioBuffer[] = [];
@@ -50,7 +55,10 @@ export class VoiceState {
 	model = $state(browser && localStorage.getItem('model') || model_options[0].v);
 	voice_name = $state(browser && localStorage.getItem('voice_name') || 'Kore');
 	noise_suppression = $state(browser && localStorage.getItem('noise_suppression') !== 'false');
+	voice_gain = $state(browser ? parseFloat(localStorage.getItem('voice_gain') ?? '1') : 1);
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
+	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
+	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
 
 	show_settings = $state(false);
 	show_voice_menu = $state(false);
@@ -73,7 +81,22 @@ export class VoiceState {
 			if (browser) localStorage.setItem('noise_suppression', String(this.noise_suppression));
 		});
 		$effect(() => {
+			if (browser) localStorage.setItem('voice_gain', String(this.voice_gain));
+		});
+		$effect(() => {
 			if (browser) localStorage.setItem('quiet', String(this.quiet));
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('gemini_key', this.gemini_key);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('exa_key', this.exa_key);
+		});
+		$effect(() => {
+			const g = this.voice_gain;
+			if (this.gemini_live_voice_gain) {
+				this.gemini_live_voice_gain.gain.value = g;
+			}
 		});
 		$effect(() => {
 			const el = this.chat_body;
@@ -107,6 +130,11 @@ export class VoiceState {
 			this.gemini_live_processor.onaudioprocess = null;
 			this.gemini_live_processor.disconnect();
 			this.gemini_live_processor = null;
+		}
+
+		if (this.gemini_live_voice_gain) {
+			this.gemini_live_voice_gain.disconnect();
+			this.gemini_live_voice_gain = null;
 		}
 
 		if (this.rnnoise_node) {
@@ -208,8 +236,12 @@ export class VoiceState {
 		this.gemini_live_closing = false;
 		try {
 			this.add_toast('Connecting voice...');
-			const res = await fetch('/api/voice/gemini-live/key');
-			const { k: key } = await res.json();
+			let key = this.gemini_key;
+			if (!key) {
+				const res = await fetch('/api/voice/gemini-live/key');
+				const d = await res.json();
+				key = d.k;
+			}
 			if (!key) throw new Error('No API key available');
 
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -244,9 +276,14 @@ export class VoiceState {
 				} catch {}
 			}
 
+			const voiceGain = audioCtx.createGain();
+			voiceGain.gain.value = this.voice_gain;
+			this.gemini_live_voice_gain = voiceGain;
+			(processorSource ?? micSource).connect(voiceGain);
+
 			const processor = audioCtx.createScriptProcessor(2048, 1, 1);
 			processor.onaudioprocess = this.gemini_process_audio;
-			(processorSource ?? micSource).connect(processor);
+			voiceGain.connect(processor);
 			const micGain = audioCtx.createGain();
 			micGain.gain.value = 0;
 			processor.connect(micGain);
@@ -284,6 +321,7 @@ export class VoiceState {
 						},
 					} as any,
 					systemInstruction: { parts: [{ text: SYS }] } as any,
+					tools: get_tool_declarations(),
 				} as any,
 			});
 			this.gemini_live_session = session;
@@ -353,6 +391,33 @@ export class VoiceState {
 		if (msg.toolCall?.functionCalls?.length) {
 			this.interrupt_audio();
 			this.start_thinking_sound();
+			(async () => {
+				for (const fc of msg.toolCall.functionCalls) {
+					if (fc.name === 'exa_search') {
+						try {
+							const body: Record<string, unknown> = { query: fc.args.query, type: fc.args.type };
+							if (this.exa_key) body.apiKey = this.exa_key;
+							const res = await fetch('/api/voice/exa-search', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify(body),
+							});
+							const data = await res.json();
+							const snippets = data.results?.map((r: any) =>
+								`Title: ${r.title}\nURL: ${r.url}\nSnippet: ${(r.highlights?.[0] || r.text?.slice(0, 500) || '')}`
+							).join('\n\n') || 'No results found';
+							this.send_gemini_tool_response({
+								functionResponses: [{ id: fc.id, name: fc.name, response: { result: snippets } }],
+							});
+						} catch (e) {
+							this.send_gemini_tool_response({
+								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }],
+							});
+						}
+					}
+				}
+				this.stop_thinking_sound();
+			})();
 		}
 		if (msg.serverContent?.modelTurn?.parts) {
 			this.stop_thinking_sound();

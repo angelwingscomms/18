@@ -3,6 +3,27 @@
 	import { get_voice_state } from '$lib/voice/voice-state.svelte.ts';
 
 	const v = get_voice_state();
+
+	let holdTimer: ReturnType<typeof setTimeout> | null = null;
+	let holdInterval: ReturnType<typeof setInterval> | null = null;
+
+	function clampGain(val: number) {
+		return Math.round(Math.max(0.5, Math.min(10, val)) * 10) / 10;
+	}
+
+	function startHold(dir: number) {
+		v.voice_gain = clampGain((v.voice_gain ?? 1) + dir * 0.5);
+		holdTimer = setTimeout(() => {
+			holdInterval = setInterval(() => {
+				v.voice_gain = clampGain((v.voice_gain ?? 1) + dir * 0.5);
+			}, 80);
+		}, 350);
+	}
+
+	function stopHold() {
+		if (holdTimer != null) { clearTimeout(holdTimer); holdTimer = null; }
+		if (holdInterval != null) { clearInterval(holdInterval); holdInterval = null; }
+	}
 </script>
 
 {#if v.show_settings}
@@ -99,6 +120,52 @@
 					<input type="checkbox" bind:checked={v.noise_suppression} class="toggle-input" />
 					<span class="toggle-switch {v.noise_suppression ? 'on' : ''}"></span>
 				</label>
+			</section>
+
+			<section class="keys-section">
+				<h3 class="setting-label">Your API keys (optional)</h3>
+				<input
+					type="password"
+					class="key-input"
+					placeholder="Gemini API key"
+					bind:value={v.gemini_key}
+				/>
+				<input
+					type="password"
+					class="key-input"
+					placeholder="Exa API key"
+					bind:value={v.exa_key}
+				/>
+				<span class="key-desc">Saved locally. Overrides server keys.</span>
+			</section>
+
+			<section class="setting-section">
+				<h3 class="setting-label">Voice gain</h3>
+				<span class="toggle-desc" style="margin-top:-4px">Amplify mic input before sending.</span>
+				<div class="gain-row">
+					<button
+						type="button"
+						class="gain-btn"
+						onmousedown={() => startHold(-1)}
+						onmouseup={stopHold}
+						onmouseleave={stopHold}
+					>−</button>
+					<input
+						type="number"
+						class="gain-input"
+						bind:value={v.voice_gain}
+						min="0.5"
+						max="10"
+						step="0.5"
+					/>
+					<button
+						type="button"
+						class="gain-btn"
+						onmousedown={() => startHold(1)}
+						onmouseup={stopHold}
+						onmouseleave={stopHold}
+					>+</button>
+				</div>
 			</section>
 			</div>
 			<div class="modal-footer">
@@ -355,6 +422,41 @@
 		background: #4a9eff;
 	}
 
+	.keys-section {
+		display: grid;
+		gap: 0.5rem;
+		background: rgba(255,255,255,0.03);
+		border-radius: 12px;
+		padding: 1rem;
+	}
+
+	.key-input {
+		width: 100%;
+		height: 40px;
+		border-radius: 10px;
+		border: 1px solid rgba(255,255,255,0.06);
+		background: rgba(0,0,0,0.3);
+		color: #ddd;
+		font-size: 0.8125rem;
+		padding: 0 0.75rem;
+		outline: none;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+	}
+
+	.key-input:focus {
+		border-color: rgba(74, 158, 255, 0.4);
+	}
+
+	.key-input::placeholder {
+		color: #555;
+	}
+
+	.key-desc {
+		font-size: 0.7rem;
+		color: #555;
+	}
+
 	.btn-primary {
 		border: none;
 		background: #4a9eff;
@@ -369,6 +471,63 @@
 
 	.btn-primary:hover {
 		background: #3a8eef;
+	}
+
+	.gain-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+
+	.gain-btn {
+		width: 40px;
+		height: 40px;
+		border-radius: 10px;
+		border: 1px solid rgba(255,255,255,0.06);
+		background: rgba(0,0,0,0.3);
+		color: #ccc;
+		font-size: 1.25rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s;
+		user-select: none;
+	}
+
+	.gain-btn:hover {
+		background: rgba(255,255,255,0.06);
+		border-color: rgba(74, 158, 255, 0.3);
+	}
+
+	.gain-btn:active {
+		background: rgba(74, 158, 255, 0.12);
+	}
+
+	.gain-input {
+		flex: 1;
+		height: 40px;
+		border-radius: 10px;
+		border: 1px solid rgba(255,255,255,0.06);
+		background: rgba(0,0,0,0.3);
+		color: #eee;
+		font-size: 1rem;
+		text-align: center;
+		padding: 0 0.5rem;
+		outline: none;
+		transition: border-color 0.2s;
+		-moz-appearance: textfield;
+	}
+
+	.gain-input::-webkit-inner-spin-button,
+	.gain-input::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+
+	.gain-input:focus {
+		border-color: rgba(74, 158, 255, 0.4);
 	}
 
 	.btn-secondary {

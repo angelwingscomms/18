@@ -119,7 +119,7 @@
 		display: flex;
 		flex-direction: column;
 		padding: 2rem 1rem;
-		max-width: 48rem;
+		max-width: 80rem;
 		margin: 0 auto;
 		width: 100%;
 	}
@@ -261,8 +261,19 @@
 
 	.main {
 		flex: 1;
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-rows: 1fr 1fr;
+		gap: 1rem;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	@media (min-width: 768px) {
+		.main {
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: 1fr;
+		}
 	}
 
 	.toast-container {

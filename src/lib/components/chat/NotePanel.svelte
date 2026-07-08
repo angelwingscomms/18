@@ -102,9 +102,13 @@
 
 <style>
 	.note-panel {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
 		border: 1px solid rgba(255,255,255,0.06);
 		border-radius: 12px;
 		background: rgba(255,255,255,0.02);
+		overflow: hidden;
 	}
 
 	.note-header {
@@ -240,8 +244,8 @@
 	.note-textarea {
 		display: block;
 		width: 100%;
-		min-height: 100px;
-		max-height: 60vh;
+		flex: 1;
+		min-height: 80px;
 		border: none;
 		border-top: 1px solid rgba(255,255,255,0.04);
 		background: rgba(0,0,0,0.2);
@@ -250,7 +254,7 @@
 		font-size: 0.8125rem;
 		line-height: 1.6;
 		padding: 0.75rem;
-		resize: vertical;
+		resize: none;
 		outline: none;
 		border-radius: 0 0 12px 12px;
 		tab-size: 2;

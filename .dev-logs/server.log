@@ -45,3 +45,51 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 3:13:39 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
 3:13:46 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
 3:13:46 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+
+[1;31m[404] GET /workletProcessor.js.map[0m
+3:17:20 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+3:17:20 AM [vite] (client) hmr update /src/routes/+page.svelte?svelte&type=style&lang.css
+3:17:20 AM [vite] (ssr) page reload src/routes/+page.svelte
+3:18:14 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+3:18:15 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/routes/+page.svelte?svelte&type=style&lang.css
+3:18:15 AM [vite] (ssr) page reload src/routes/+page.svelte
+3:18:15 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+3:18:23 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:18:23 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:201:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+3:18:23 AM [vite] (client) hmr update /src/lib/components/chat/ChatPanel.svelte
+3:18:23 AM [vite] (ssr) page reload src/lib/components/chat/ChatPanel.svelte
+3:18:23 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:18:23 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:201:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+3:18:27 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:18:27 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:202:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+3:18:27 AM [vite] (client) hmr update /src/lib/components/chat/ChatPanel.svelte?svelte&type=style&lang.css
+3:18:27 AM [vite] (ssr) page reload src/lib/components/chat/ChatPanel.svelte
+3:18:31 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:18:31 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+3:18:31 AM [vite] (client) hmr update /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/ChatPanel.svelte?svelte&type=style&lang.css
+3:18:31 AM [vite] (ssr) page reload src/lib/components/chat/ChatPanel.svelte
+3:18:32 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:18:32 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+3:18:39 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+3:18:39 AM [vite] (client) hmr update /src/lib/components/chat/NotePanel.svelte?svelte&type=style&lang.css
+3:18:39 AM [vite] (ssr) page reload src/lib/components/chat/NotePanel.svelte
+3:18:44 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+3:18:44 AM [vite] (client) hmr update /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/NotePanel.svelte?svelte&type=style&lang.css
+3:18:44 AM [vite] (ssr) page reload src/lib/components/chat/NotePanel.svelte
+3:18:44 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events

@@ -31,27 +31,6 @@
 		v.pending_images = v.pending_images.filter((_, i) => i !== idx);
 	}
 
-	$effect(() => {
-		if (!panel) return;
-		const update = () => {
-			const rect = panel.getBoundingClientRect();
-			const suggestions = panel.querySelector<HTMLDivElement>('[data-ms]');
-			const input = panel.querySelector<HTMLDivElement>('[data-mi]');
-			const btm = (suggestions?.offsetHeight ?? 0) + (input?.offsetHeight ?? 0) + 12;
-			const avail = window.innerHeight - rect.top - btm;
-			const h = Math.max(60, Math.round(avail));
-			panel.querySelector<HTMLDivElement>('.chat-msgs')!.style.maxHeight = h + 'px';
-		};
-		update();
-		const ro = new ResizeObserver(update);
-		ro.observe(panel);
-		ro.observe(document.documentElement);
-		window.addEventListener('resize', update);
-		return () => {
-			ro.disconnect();
-			window.removeEventListener('resize', update);
-		};
-	});
 </script>
 
 <div bind:this={panel} class="chat-panel">
@@ -135,8 +114,9 @@
 <style>
 	.chat-panel {
 		width: 100%;
-		max-width: 42rem;
-		margin: 0 auto;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
 		background: rgba(20, 20, 20, 0.6);
 		border-radius: 16px;
 		overflow: hidden;
@@ -145,7 +125,9 @@
 	}
 
 	.chat-msgs {
+		flex: 1;
 		overflow-y: auto;
+		min-height: 0;
 		padding: 1.25rem;
 		display: flex;
 		flex-direction: column;

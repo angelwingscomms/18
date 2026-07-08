@@ -1,7 +1,10 @@
 import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
-import { PiperTTS, type VoiceId, VOICES } from './piper-tts';
+import type { VoiceId } from './voices';
+import { VOICES } from './voices';
 import { AudioQueue } from './audio-queue';
+
+type PiperTTS = import('./piper-tts').PiperTTS;
 
 const TTS_KEY = Symbol('tts');
 
@@ -43,7 +46,8 @@ export class TTSState {
 		this.error = null;
 		try {
 			if (!this.tts) {
-				this.tts = new PiperTTS({
+				const { PiperTTS: PiperTTSClass } = await import('./piper-tts');
+				this.tts = new PiperTTSClass({
 					voiceId: this.voiceId,
 					onChunk: (pcm, chunkIndex, text) => {
 						this.currentText = text;

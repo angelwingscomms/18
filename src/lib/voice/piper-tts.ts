@@ -1,12 +1,7 @@
 import { PiperWebEngine, OnnxWebRuntime } from 'piper-tts-web';
 
-export type VoiceId = string;
-
-export interface VoiceInfo {
-	name: string;
-	size: number;
-	lang: string;
-}
+export type { VoiceId, VoiceInfo } from './voices';
+export { VOICES } from './voices';
 
 export interface TTSConfig {
 	voiceId: VoiceId;
@@ -15,13 +10,6 @@ export interface TTSConfig {
 	onError?: (err: Error) => void;
 	onProgress?: (downloaded: number, total: number) => void;
 }
-
-export const VOICES: Record<VoiceId, VoiceInfo> = {
-	'en_US-hfc_female-medium': { name: 'HFC Female', size: 20, lang: 'en' },
-	'en_US-lessac-medium': { name: 'Lessac Male', size: 20, lang: 'en' },
-	'en_US-ryan-medium': { name: 'Ryan Male', size: 40, lang: 'en' },
-	'en_US-libritts_r-medium': { name: 'LibriTTS R', size: 75, lang: 'en' },
-};
 
 export class PiperTTS {
 	private engine: PiperWebEngine | null = null;

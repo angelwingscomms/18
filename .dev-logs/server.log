@@ -217,3 +217,74 @@ https://svelte.dev/e/a11y_interactive_supports_focus
 4:49:06 PM [vite] (client) page reload .svelte-kit/generated/root.js
 4:49:06 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
 4:49:06 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+
+  ➜  Local:   http://localhost:1800/
+  ➜  Network: use --host to expose
+5:18:50 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:18:50 PM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+5:18:55 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:18:55 PM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+5:19:00 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:19:00 PM [vite] (ssr) page reload src/lib/voice/tts-state.svelte.ts
+5:19:06 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:19:06 PM [vite] (ssr) page reload src/lib/voice/tts-state.svelte.ts
+5:19:28 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:19:28 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:19:28 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:19:28 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:19:28 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:19:28 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:19:28 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:19:28 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:19:28 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:19:28 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:19:35 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:19:35 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:19:35 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:19:35 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:19:35 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:19:35 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:19:35 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:19:35 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:19:35 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:19:35 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:19:53 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:19:53 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:19:53 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:19:53 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:19:53 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:19:53 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:19:53 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:19:53 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:19:53 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:19:53 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:20:30 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:20:30 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:20:30 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:20:30 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:20:30 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:20:30 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:20:30 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:20:30 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:20:30 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:20:30 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:20:34 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:20:34 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:20:34 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:20:34 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:20:34 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:20:34 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:20:34 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:20:34 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:20:34 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:20:34 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:20:46 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:20:46 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:20:46 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:20:46 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:20:46 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:20:46 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:20:46 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:20:46 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:20:46 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:20:46 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

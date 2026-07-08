@@ -13,7 +13,7 @@ You have a tool called exa_search that searches the web. Only use exa_search whe
 
 You also have a tool called clear_chat that clears all chat messages. Before calling clear_chat, you must ask the user for confirmation. Only proceed if the user explicitly confirms.
 
-You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id.
+You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id. Before calling edit_note, always call read_note first on the same note so you know the current content.
 
 The user can send you images. When you receive an image, acknowledge and describe what you see if asked.`;
 const KEY = Symbol('voice');

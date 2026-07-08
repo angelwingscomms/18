@@ -93,3 +93,5 @@ https://svelte.dev/e/a11y_click_events_have_key_events
 3:18:44 AM [vite] (ssr) page reload src/lib/components/chat/NotePanel.svelte
 3:18:44 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 https://svelte.dev/e/a11y_click_events_have_key_events
+3:23:41 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+3:23:41 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts

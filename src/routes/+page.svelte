@@ -20,6 +20,19 @@
 	let voice_muted = $derived(voice?.voice_muted ?? false);
 	let audio_muted = $derived(voice?.audio_muted ?? false);
 	let toasts = $derived(voice?.toasts ?? []);
+	let confirming_clear = $state(false);
+
+	function handle_clear() {
+		if (!voice) return;
+		if (voice.chat_messages.length === 0) return;
+		if (confirming_clear) {
+			voice.clearChat();
+			confirming_clear = false;
+		} else {
+			confirming_clear = true;
+			setTimeout(() => confirming_clear = false, 3000);
+		}
+	}
 </script>
 
 {#if voice}
@@ -71,8 +84,12 @@
 					</button>
 
 					{#if recording}
-						<button class="control-dot" onclick={() => voice.clearChat()} title="Clear">
-							<XIcon size={14} color="#666" />
+						<button class="control-dot {confirming_clear ? 'confirm' : ''}" onclick={handle_clear} title={confirming_clear ? 'Click again to confirm' : 'Clear'}>
+							{#if confirming_clear}
+								<span class="confirm-text">?</span>
+							{:else}
+								<XIcon size={14} color="#666" />
+							{/if}
 						</button>
 					{/if}
 				</div>
@@ -229,6 +246,17 @@
 	.control-dot.muted {
 		border-color: rgba(255, 68, 68, 0.4);
 		background: rgba(255, 68, 68, 0.1);
+	}
+
+	.control-dot.confirm {
+		border-color: rgba(255, 200, 50, 0.6);
+		background: rgba(255, 200, 50, 0.12);
+	}
+
+	.confirm-text {
+		color: #ffc832;
+		font-size: 14px;
+		font-weight: 700;
 	}
 
 	.main {

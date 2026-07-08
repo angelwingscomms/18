@@ -1,9 +1,9 @@
-export type ChatMsg = { role: 'user' | 'assistant'; content: string };
+export type ChatMsg = { role: 'user' | 'assistant'; content: string; images?: string[] };
 
 export interface Note {
-	id: string;
-	title: string;
-	content: string;
+	i: string;
+	t: string;
+	b: string;
 }
 
 export const model_options = [

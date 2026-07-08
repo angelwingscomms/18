@@ -5,6 +5,31 @@
 	const v = get_voice_state();
 
 	let panel: HTMLDivElement;
+	let file_input: HTMLInputElement;
+
+	function pick_images() {
+		file_input?.click();
+	}
+
+	function on_files_selected(e: Event) {
+		const input = e.target as HTMLInputElement;
+		if (!input.files?.length) return;
+		const files = Array.from(input.files);
+		for (const f of files) {
+			if (!f.type.startsWith('image/')) continue;
+			const reader = new FileReader();
+			reader.onload = (re) => {
+				const url = re.target?.result as string;
+				if (url) v.pending_images = [...v.pending_images, url];
+			};
+			reader.readAsDataURL(f);
+		}
+		input.value = '';
+	}
+
+	function remove_pending_img(idx: number) {
+		v.pending_images = v.pending_images.filter((_, i) => i !== idx);
+	}
 
 	$effect(() => {
 		if (!panel) return;
@@ -38,10 +63,19 @@
 			<div class="msg-row {msg.role === 'user' ? 'user' : 'assistant'}">
 				<div class="msg-group {msg.role === 'user' ? 'user-group' : ''}">
 					<div class="msg-bubble {msg.role === 'user' ? 'user-bubble' : 'assistant-bubble'}">
-						{#if msg.role === 'assistant'}
-							{@html marked.parse(msg.content)}
-						{:else}
-							{msg.content}
+						{#if msg.images && msg.images.length > 0}
+							<div class="msg-imgs">
+								{#each msg.images as img}
+									<img src={img} alt="user image" class="msg-img" />
+								{/each}
+							</div>
+						{/if}
+						{#if msg.content}
+							{#if msg.role === 'assistant'}
+								{@html marked.parse(msg.content)}
+							{:else}
+								{msg.content}
+							{/if}
 						{/if}
 					</div>
 					<div class="msg-actions">
@@ -58,20 +92,43 @@
 		{/each}
 	</div>
 	<div data-mi class="chat-input-row">
-		<textarea
-			bind:this={v.chat_input_ref}
-			bind:value={v.chat_input}
-			rows={1}
-			onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); v.sendChatMessage(v.chat_input); } }}
-			oninput={(e) => { const t = e.currentTarget; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
-			placeholder="Ask anything..."
-			class="chat-textarea"
-		></textarea>
-		<button
-			onclick={() => v.sendChatMessage(v.chat_input)}
-			disabled={!v.chat_input.trim()}
-			class="send-btn"
-		>→</button>
+		{#if v.pending_images.length > 0}
+			<div class="pending-imgs">
+				{#each v.pending_images as img, idx (idx)}
+					<div class="pending-img-wrap">
+						<img src={img} alt="pending" class="pending-img" />
+						<button class="remove-img" onclick={() => remove_pending_img(idx)}>×</button>
+					</div>
+				{/each}
+			</div>
+		{/if}
+		<div class="input-row-inner">
+			<button class="img-btn" onclick={pick_images} title="Upload image">
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+			</button>
+			<input
+				type="file"
+				accept="image/*"
+				multiple
+				bind:this={file_input}
+				onchange={on_files_selected}
+				class="file-input-hidden"
+			/>
+			<textarea
+				bind:this={v.chat_input_ref}
+				bind:value={v.chat_input}
+				rows={1}
+				onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); v.sendChatMessage(v.chat_input); } }}
+				oninput={(e) => { const t = e.currentTarget; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
+				placeholder="Ask anything..."
+				class="chat-textarea"
+			></textarea>
+			<button
+				onclick={() => v.sendChatMessage(v.chat_input)}
+				disabled={!v.chat_input.trim() && v.pending_images.length === 0}
+				class="send-btn"
+			>→</button>
+		</div>
 	</div>
 </div>
 
@@ -249,5 +306,88 @@
 
 	.send-btn:active:not(:disabled) {
 		transform: scale(0.95);
+	}
+
+	.file-input-hidden {
+		display: none;
+	}
+
+	.img-btn {
+		background: none;
+		border: none;
+		color: #555;
+		cursor: pointer;
+		padding: 0.375rem;
+		border-radius: 8px;
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		transition: all 0.15s;
+	}
+
+	.img-btn:hover {
+		color: #aaa;
+		background: rgba(255,255,255,0.06);
+	}
+
+	.input-row-inner {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		width: 100%;
+	}
+
+	.pending-imgs {
+		display: flex;
+		gap: 0.375rem;
+		flex-wrap: wrap;
+		padding: 0 0 0.375rem 0;
+	}
+
+	.pending-img-wrap {
+		position: relative;
+		width: 56px;
+		height: 56px;
+		border-radius: 8px;
+		overflow: hidden;
+		border: 1px solid rgba(255,255,255,0.08);
+	}
+
+	.pending-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.remove-img {
+		position: absolute;
+		top: -2px;
+		right: -2px;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		border: none;
+		background: rgba(0,0,0,0.7);
+		color: #fff;
+		font-size: 12px;
+		line-height: 1;
+		cursor: pointer;
+		display: grid;
+		place-items: center;
+		padding: 0;
+	}
+
+	.msg-imgs {
+		display: flex;
+		gap: 0.375rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.375rem;
+	}
+
+	.msg-img {
+		max-width: 200px;
+		max-height: 200px;
+		border-radius: 8px;
+		object-fit: contain;
 	}
 </style>

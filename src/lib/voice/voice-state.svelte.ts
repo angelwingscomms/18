@@ -9,13 +9,13 @@ function new_note_id() { return 'n' + (++note_id_counter); }
 
 const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. When the conversation starts, greet the user.
 
-You have a tool called exa_search that searches the web. ALWAYS use exa_search for any query that might be time-sensitive, period-sensitive, or about recent events, news, prices, weather, dates, releases, or anything that may have changed recently. When in doubt, search.
+You have a tool called exa_search that searches the web. Only use exa_search when the user specifically asks you to search the web. Do not search on your own initiative.
 
-When you use exa_search and produce a response based on the results, ALWAYS include the phrase "i searched the net" in your response.
+You also have a tool called clear_chat that clears all chat messages. Before calling clear_chat, you must ask the user for confirmation. Only proceed if the user explicitly confirms.
 
-You also have a tool called clear_chat that clears all chat messages. Use it when the user asks you to clear the chat or start over.
+You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id.
 
-You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id.`;
+The user can send you images. When you receive an image, acknowledge and describe what you see if asked.`;
 const KEY = Symbol('voice');
 
 export function set_voice_state(state: VoiceState) {
@@ -40,6 +40,9 @@ export class VoiceState {
 	gemini_live_audio_queue: AudioBuffer[] = [];
 	gemini_live_audio_playing = false;
 	gemini_live_current_source: AudioBufferSourceNode | null = null;
+
+	pending_clear = $state(false);
+	pending_images = $state<string[]>([]);
 
 	gemini_live_healthy = false;
 	gemini_live_closing = false;
@@ -71,18 +74,19 @@ export class VoiceState {
 	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
 
 	get active_note(): Note | undefined {
-		return this.notes.find(n => n.id === this.active_note_id);
+		return this.notes.find(n => n.i === this.active_note_id);
 	}
 
 	get note_content(): string {
-		return this.active_note?.content ?? '';
+		return this.active_note?.b ?? '';
 	}
 
 	set note_content(val: string) {
 		const n = this.active_note;
 		if (n) {
-			n.content = val;
+			n.b = val;
 			this.notes = [...this.notes];
+			this.qdrant_call('payload', n.i, undefined, n.b);
 		}
 	}
 
@@ -94,15 +98,24 @@ export class VoiceState {
 	toast_id = $state(0);
 
 	constructor() {
+		this.notes = this.notes.map(n => {
+			if (!n || typeof n !== 'object') return { i: new_note_id(), t: 'Note', b: '' };
+			if (!n.i) {
+				if ('id' in n) return { i: (n as any).id, t: (n as any).title || 'Note', b: (n as any).content || (n as any).b || '' };
+				return { i: new_note_id(), t: n.t || 'Note', b: (n as any).b || '' };
+			}
+			return n;
+		});
 		note_id_counter = Math.max(0, ...this.notes.map(n => {
-			const m = n.id.match(/^n(\d+)$/);
+			if (!n.i) return 0;
+			const m = n.i.match(/^n(\d+)$/);
 			return m ? parseInt(m[1], 10) : 0;
 		}));
 		if (this.notes.length === 0) {
-			this.notes = [{ id: new_note_id(), title: 'Note', content: '' }];
+			this.notes = [{ i: new_note_id(), t: 'Note', b: '' }];
 		}
-		if (!this.active_note_id || !this.notes.find(n => n.id === this.active_note_id)) {
-			this.active_note_id = this.notes[0].id;
+		if (!this.active_note_id || !this.notes.find(n => n.i === this.active_note_id)) {
+			this.active_note_id = this.notes[0].i;
 		}
 		$effect(() => {
 			return () => { this.cleanup(); };
@@ -429,20 +442,31 @@ export class VoiceState {
 		} catch {}
 	}
 
+	async qdrant_call(a: string, i: string, t?: string, b?: string) {
+		if (!browser) return;
+		try {
+			await fetch('/api/voice/qdrant', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ a, i, t, b }),
+			});
+		} catch {}
+	}
+
 	note_for_id(note_id?: string): Note | undefined {
-		if (note_id) return this.notes.find(n => n.id === note_id);
+		if (note_id) return this.notes.find(n => n.i === note_id);
 		return this.active_note;
 	}
 
 	read_note(note_id?: string, offset = 1, limit = 2000): string {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
-		const lines = note.content.split('\n');
+		const lines = note.b.split('\n');
 		const start = Math.max(0, offset - 1);
 		const sliced = lines.slice(start, start + limit);
 		const total = lines.length;
 		const last = start + sliced.length;
-		let out = `Note: "${note.title}"\n`;
+		let out = `Note: "${note.t}"\n`;
 		out += sliced.map((line, i) => `${start + i + 1}: ${line}`).join('\n');
 		if (last < total) out += `\n(Showing lines ${offset}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
 		else out += `\n(End - total ${total} lines)`;
@@ -453,54 +477,60 @@ export class VoiceState {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
 		if (oldString === '') {
-			note.content = note.content + newString;
+			note.b = note.b + newString;
 			this.notes = [...this.notes];
+			this.qdrant_call('payload', note.i, undefined, note.b);
 			return 'Appended to note.';
 		}
-		const content = note.content;
+		const content = note.b;
 		if (replaceAll) {
 			const count = content.split(oldString).length - 1;
 			if (count === 0) return 'Error: oldString not found in note.';
-			note.content = content.split(oldString).join(newString);
+			note.b = content.split(oldString).join(newString);
 			this.notes = [...this.notes];
+			this.qdrant_call('payload', note.i, undefined, note.b);
 			return `Replaced ${count} occurrence(s) in note.`;
 		}
 		const first = content.indexOf(oldString);
 		if (first === -1) return 'Error: oldString not found in note.';
 		const last_c = content.lastIndexOf(oldString);
 		if (first !== last_c) return 'Error: Found multiple matches. Use replaceAll or provide more context.';
-		note.content = content.substring(0, first) + newString + content.substring(first + oldString.length);
+		note.b = content.substring(0, first) + newString + content.substring(first + oldString.length);
 		this.notes = [...this.notes];
+		this.qdrant_call('payload', note.i, undefined, note.b);
 		return 'Edited note.';
 	}
 
 	list_notes(): string {
-		return this.notes.map(n => `- ${n.id}: "${n.title}" (${n.content.split('\n').length} lines)${n.id === this.active_note_id ? ' [active]' : ''}`).join('\n');
+		return this.notes.map(n => `- ${n.i}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`).join('\n');
 	}
 
-	add_note(title = 'Note', content = ''): string {
-		const id = new_note_id();
-		this.notes = [...this.notes, { id, title, content }];
-		this.active_note_id = id;
-		return `Created note "${title}" (id: ${id}).`;
+	add_note(t = 'Note', b = ''): string {
+		const i = new_note_id();
+		this.notes = [...this.notes, { i, t, b }];
+		this.active_note_id = i;
+		this.qdrant_call('upsert', i, t, b);
+		return `Created note "${t}" (id: ${i}).`;
 	}
 
 	delete_note(note_id: string): string {
-		const idx = this.notes.findIndex(n => n.id === note_id);
+		const idx = this.notes.findIndex(n => n.i === note_id);
 		if (idx === -1) return 'Error: Note not found.';
 		if (this.notes.length <= 1) return 'Error: Cannot delete the last note.';
-		this.notes = this.notes.filter(n => n.id !== note_id);
+		this.notes = this.notes.filter(n => n.i !== note_id);
 		if (this.active_note_id === note_id) {
-			this.active_note_id = this.notes[0].id;
+			this.active_note_id = this.notes[0].i;
 		}
+		this.qdrant_call('delete', note_id);
 		return 'Deleted note.';
 	}
 
 	rename_note(title: string, note_id?: string): string {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
-		note.title = title;
+		note.t = title;
 		this.notes = [...this.notes];
+		this.qdrant_call('payload', note.i, note.t);
 		return `Renamed note to "${title}".`;
 	}
 
@@ -545,10 +575,23 @@ export class VoiceState {
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
 						});
 					} else if (fc.name === 'clear_chat') {
-						this.clearChat();
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Chat cleared.' } }],
-						});
+						if (this.chat_messages.length === 0) {
+							this.send_gemini_tool_response({
+								functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Chat is already empty.' } }],
+							});
+						} else if (!this.pending_clear) {
+							this.pending_clear = true;
+							setTimeout(() => { this.pending_clear = false; }, 30000);
+							this.send_gemini_tool_response({
+								functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Please ask the user to confirm they want to clear all chat messages.' } }],
+							});
+						} else {
+							this.pending_clear = false;
+							this.clearChat();
+							this.send_gemini_tool_response({
+								functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Chat cleared.' } }],
+							});
+						}
 					} else if (fc.name === 'list_notes') {
 						this.send_gemini_tool_response({
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result: this.list_notes() } }],
@@ -600,6 +643,7 @@ export class VoiceState {
 			this.interrupt_audio();
 		}
 		if (msg.serverContent?.inputTranscription?.text) {
+			this.pending_clear = false;
 			const text = msg.serverContent.inputTranscription.text;
 			this.output_turn_active = false;
 			this.chat_messages = [...this.chat_messages, { role: 'user', content: text }];
@@ -658,15 +702,27 @@ export class VoiceState {
 	}
 
 	async sendChatMessage(text: string) {
-		if (!text.trim()) return;
+		if (!text.trim() && this.pending_images.length === 0) return;
 		const t = text.trim();
+		this.pending_clear = false;
+		const imgs = this.pending_images;
+		this.pending_images = [];
 		this.chat_input = '';
 		if (this.chat_input_ref) this.chat_input_ref.style.height = 'auto';
 		if (this.gemini_live_can_send()) {
 			this.output_turn_active = false;
-			this.chat_messages = [...this.chat_messages, { role: 'user', content: t }];
+			this.chat_messages = [...this.chat_messages, { role: 'user', content: t || '(image)', images: imgs.length ? imgs : undefined }];
 			try {
-				this.gemini_live_session.sendRealtimeInput({ text: t });
+				const parts: Record<string, unknown>[] = [];
+				for (const img of imgs) {
+					const mime = img.split(';')[0].split(':')[1];
+					const data = img.split(',')[1];
+					parts.push({ media: { data, mimeType: mime } });
+				}
+				if (t) parts.push({ text: t });
+				for (const p of parts) {
+					this.gemini_live_session.sendRealtimeInput(p);
+				}
 			} catch {}
 		} else {
 			this.add_toast('Start voice chat first to send messages', 'e');

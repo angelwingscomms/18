@@ -1,62 +1,47 @@
 $ vite dev --port 1800
+3:09:10 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
+3:09:10 AM [vite] (ssr) Re-optimizing dependencies because lockfile has changed
 
-  VITE v8.1.3  ready in 2905 ms
+  VITE v8.1.3  ready in 3373 ms
 
   ➜  Local:   http://localhost:1800/
   ➜  Network: use --host to expose
   ➜  press h + enter to show help
 Using secrets defined in .env
-2:50:45 PM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+Using secrets defined in .env
+*** Fatal uncaught kj::Exception: workerd/util/sqlite.c++:844: failed: SENTRY_DO SQLite failed; NOSENTRY database is locked: SQLITE_BUSY (extended: SQLITE_BUSY_RECOVERY)
+stack: /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3399bbb /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1ff8045 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2055de2 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@201273c /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2012192 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1fc8a32 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@20501ef /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2053545 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1f99339 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540d085 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540d5a8 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540b05e /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540ae5e /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1f80d17 /usr/lib/libc.so.6@2abfb /usr/lib/libc.so.6@2acb4 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1f80024
+3:09:17 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
 https://svelte.dev/e/state_referenced_locally
-2:50:45 PM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:165:1 Unused CSS selector ".copy-btn.copied"
+
+[1;31m[404] GET /favicon.ico[0m
+3:09:18 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:69:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:09:18 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:222:1 Unused CSS selector ".copy-btn.copied"
 https://svelte.dev/e/css_unused_selector
-2:50:45 PM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+3:09:18 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 https://svelte.dev/e/a11y_click_events_have_key_events
-2:50:45 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+3:09:18 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
 https://svelte.dev/e/a11y_interactive_supports_focus
-2:50:45 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+3:09:18 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-2:50:45 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+3:09:18 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-2:50:46 PM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+3:09:20 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
 https://svelte.dev/e/state_referenced_locally
-2:50:46 PM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
-https://svelte.dev/e/a11y_click_events_have_key_events
-2:50:46 PM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:165:1 Unused CSS selector ".copy-btn.copied"
+3:09:20 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:69:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:09:20 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:222:1 Unused CSS selector ".copy-btn.copied"
 https://svelte.dev/e/css_unused_selector
-2:50:46 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+3:09:20 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+3:09:20 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
 https://svelte.dev/e/a11y_interactive_supports_focus
-2:50:46 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+3:09:20 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-2:50:46 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+3:09:20 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-3:21:39 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
-3:21:39 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
-3:21:39 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
-3:21:39 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
-3:21:39 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
-3:21:39 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
-3:21:39 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
-3:21:39 PM [vite] (client) page reload .svelte-kit/generated/root.js
-3:21:39 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
-3:21:39 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
-3:21:42 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
-3:21:42 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
-3:21:42 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
-3:21:42 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
-3:21:42 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
-3:21:42 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
-3:21:42 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
-3:21:42 PM [vite] (client) page reload .svelte-kit/generated/root.js
-3:21:42 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
-3:21:42 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
-3:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
-3:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
-3:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
-3:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
-3:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
-3:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
-3:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
-3:21:45 PM [vite] (client) page reload .svelte-kit/generated/root.js
-3:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
-3:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+3:13:39 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+3:13:39 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+3:13:46 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+3:13:46 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts

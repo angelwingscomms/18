@@ -12,10 +12,10 @@
 	let rename_input = $state<HTMLInputElement | null>(null);
 
 	function start_rename(note_id: string) {
-		const n = v.notes.find(x => x.id === note_id);
+		const n = v.notes.find(x => x.i === note_id);
 		if (!n) return;
 		rename_id = note_id;
-		rename_val = n.title;
+		rename_val = n.t;
 		requestAnimationFrame(() => rename_input?.select());
 	}
 
@@ -43,7 +43,7 @@
 		if (textarea && n) {
 			textarea.style.height = 'auto';
 			const line_h = parseFloat(getComputedStyle(textarea).lineHeight);
-			textarea.style.height = Math.max(line_h * 4, Math.min(line_h * 40, n.content.split('\n').length * line_h + 24)) + 'px';
+			textarea.style.height = Math.max(line_h * 4, Math.min(line_h * 40, n.b.split('\n').length * line_h + 24)) + 'px';
 		}
 	});
 </script>
@@ -57,8 +57,8 @@
 			</button>
 			{#if v.show_note}
 				<div class="tabs-scroll">
-					{#each v.notes as note (note.id)}
-						{#if rename_id === note.id}
+					{#each v.notes as note (note.i)}
+						{#if rename_id === note.i}
 							<input
 								bind:this={rename_input}
 								class="rename-input"
@@ -68,14 +68,14 @@
 							/>
 						{:else}
 							<button
-								class="tab {note.id === v.active_note_id ? 'active' : ''}"
-								onclick={() => v.active_note_id = note.id}
-								ondblclick={() => start_rename(note.id)}
-								title={note.title}
+								class="tab {note.i === v.active_note_id ? 'active' : ''}"
+								onclick={() => v.active_note_id = note.i}
+								ondblclick={() => start_rename(note.i)}
+								title={note.t}
 							>
-								<span class="tab-title">{note.title}</span>
+								<span class="tab-title">{note.t}</span>
 								{#if v.notes.length > 1}
-									<span class="tab-close" onclick={(e) => { e.stopPropagation(); remove(note.id); }} role="button" tabindex="-1" title="Delete note">
+									<span class="tab-close" onclick={(e) => { e.stopPropagation(); remove(note.i); }} role="button" tabindex="-1" title="Delete note">
 										<XIcon size={10} color="#555" />
 									</span>
 								{/if}

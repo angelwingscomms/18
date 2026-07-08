@@ -135,6 +135,8 @@ export class PiperTTS {
 	private session: ort.InferenceSession | null = null;
 	private config: TTSConfig;
 	private abortController: AbortController | null = null;
+	private inputName = '';
+	private outputName = '';
 
 	isLoaded = false;
 	isLoading = false;
@@ -175,6 +177,8 @@ export class PiperTTS {
 				}
 			);
 			this.session = session;
+			this.inputName = session.inputNames[0];
+			this.outputName = session.outputNames[0];
 			this.isLoaded = true;
 		} catch (e) {
 			this.loadError = e instanceof Error ? e.message : String(e);
@@ -242,17 +246,19 @@ export class PiperTTS {
 		}
 
 		const phonemes = textToPhonemes(text);
-		const phonemeTensor = new ort.Tensor('int64', BigInt64Array.from(phonemes.map(BigInt)), [1, phonemes.length]);
+		const ids = BigInt64Array.from(phonemes.map(BigInt));
 
 		const feeds: Record<string, ort.Tensor> = {
-			phoneme: phonemeTensor,
+			[this.inputName]: new ort.Tensor('int64', ids, [1, ids.length]),
 		};
 
-		const results = await this.session.run(feeds);
-		const audioTensor = results['audio'] as ort.Tensor;
-		const audioData = audioTensor.data as Float32Array;
+		if (this.session.inputNames.includes('input_lengths')) {
+			feeds['input_lengths'] = new ort.Tensor('int64', BigInt64Array.from([BigInt(ids.length)]), [1]);
+		}
 
-		return audioData;
+		const results = await this.session.run(feeds);
+		const audioTensor = results[this.outputName] as ort.Tensor;
+		return audioTensor.data as Float32Array;
 	}
 
 	abort(): void {

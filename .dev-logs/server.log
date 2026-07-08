@@ -64,3 +64,17 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 9:56:01 AM [vite] (client) page reload .svelte-kit/generated/root.js
 9:56:01 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
 9:56:01 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+10:19:04 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+10:19:04 AM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+10:19:10 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+10:19:10 AM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+10:19:17 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+10:19:17 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+10:19:17 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+10:19:17 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+10:19:17 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+10:19:17 AM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+10:19:17 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+10:19:17 AM [vite] (client) page reload .svelte-kit/generated/root.js
+10:19:17 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+10:19:18 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

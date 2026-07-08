@@ -115,13 +115,15 @@
 
 <style>
 	.app {
-		min-height: 100dvh;
+		height: 100dvh;
 		display: flex;
 		flex-direction: column;
 		padding: 2rem 1rem;
 		max-width: 80rem;
 		margin: 0 auto;
 		width: 100%;
+		overflow: hidden;
+		box-sizing: border-box;
 	}
 
 	.header {

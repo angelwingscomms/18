@@ -95,3 +95,15 @@ https://svelte.dev/e/a11y_click_events_have_key_events
 https://svelte.dev/e/a11y_click_events_have_key_events
 3:23:41 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
 3:23:41 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+3:56:13 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+3:56:16 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+3:56:16 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+3:56:16 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:78:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+5:29:48 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+5:29:48 AM [vite] (client) hmr update /src/routes/+page.svelte?svelte&type=style&lang.css
+5:29:48 AM [vite] (ssr) page reload src/routes/+page.svelte

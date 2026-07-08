@@ -1,78 +1,101 @@
 $ vite dev --port 1800
 
-  VITE v8.1.3  ready in 1888 ms
+  VITE v8.1.3  ready in 2297 ms
 
   ➜  Local:   http://localhost:1800/
   ➜  Network: use --host to expose
   ➜  press h + enter to show help
 Using secrets defined in .env
-11:13:46 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
-https://svelte.dev/e/state_referenced_locally
-11:13:48 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
-https://svelte.dev/e/a11y_img_redundant_alt
-11:13:48 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
-https://svelte.dev/e/css_unused_selector
-11:13:48 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
-https://svelte.dev/e/a11y_click_events_have_key_events
-11:13:48 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
-https://svelte.dev/e/a11y_interactive_supports_focus
-11:13:48 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
-https://svelte.dev/e/a11y_role_has_required_aria_props
-11:13:48 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
-https://svelte.dev/e/a11y_role_has_required_aria_props
-11:13:48 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
-https://svelte.dev/e/state_referenced_locally
-11:13:49 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
-https://svelte.dev/e/a11y_img_redundant_alt
-11:13:49 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
-https://svelte.dev/e/css_unused_selector
-11:13:49 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
-https://svelte.dev/e/a11y_click_events_have_key_events
-11:13:49 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
-https://svelte.dev/e/a11y_interactive_supports_focus
-11:13:49 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
-https://svelte.dev/e/a11y_role_has_required_aria_props
-11:13:49 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
-https://svelte.dev/e/a11y_role_has_required_aria_props
-11:17:05 AM [vite] (ssr) page reload src/hooks.server.ts
-11:17:06 AM [vite] vite.config.ts changed, restarting server...
-11:17:06 AM [vite] server restarted.
 Using secrets defined in .env
-11:17:28 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+*** Fatal uncaught kj::Exception: workerd/util/sqlite.c++:844: failed: SENTRY_DO SQLite failed; NOSENTRY database is locked: SQLITE_BUSY (extended: SQLITE_BUSY_RECOVERY)
+stack: /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@3399bbb /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1ff8045 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2055de2 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@201273c /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2012192 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1fc8a32 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@20501ef /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@2053545 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1f99339 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540d085 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540d5a8 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540b05e /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@540ae5e /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1f80d17 /usr/lib/libc.so.6@2abfb /usr/lib/libc.so.6@2acb4 /home/ed/i/18/node_modules/.pnpm/@cloudflare+workerd-linux-64@1.20260701.1/node_modules/@cloudflare/workerd-linux-64/bin/workerd@1f80024
+1:58:51 PM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
 https://svelte.dev/e/state_referenced_locally
-11:17:29 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+
+[1;31m[404] GET /favicon.ico[0m
+1:58:53 PM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
 https://svelte.dev/e/a11y_img_redundant_alt
-11:17:29 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+1:58:53 PM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
 https://svelte.dev/e/css_unused_selector
-11:17:29 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+1:58:53 PM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 https://svelte.dev/e/a11y_click_events_have_key_events
-11:17:29 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+1:58:53 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
 https://svelte.dev/e/a11y_interactive_supports_focus
-11:17:29 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+1:58:53 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-11:17:29 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+1:58:53 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-11:17:30 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+1:59:12 PM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
 https://svelte.dev/e/state_referenced_locally
-11:17:30 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+1:59:12 PM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
 https://svelte.dev/e/a11y_img_redundant_alt
-11:17:30 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+1:59:12 PM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
 https://svelte.dev/e/css_unused_selector
-11:17:30 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+1:59:12 PM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 https://svelte.dev/e/a11y_click_events_have_key_events
-11:17:30 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+1:59:12 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
 https://svelte.dev/e/a11y_interactive_supports_focus
-11:17:30 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+1:59:12 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-11:17:30 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+1:59:12 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
-11:17:31 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
-11:17:31 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
-11:17:31 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
-11:17:31 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
-11:17:31 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
-11:17:31 AM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
-11:17:31 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
-11:17:31 AM [vite] (client) page reload .svelte-kit/generated/root.js
-11:17:31 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
-11:17:31 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+2:21:41 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+2:21:41 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+2:21:41 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+2:21:41 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+2:21:41 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+2:21:41 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+2:21:41 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+2:21:41 PM [vite] (client) page reload .svelte-kit/generated/root.js
+2:21:41 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+2:21:41 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+2:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+2:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+2:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+2:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+2:21:45 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+2:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+2:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+2:21:45 PM [vite] (client) page reload .svelte-kit/generated/root.js
+2:21:45 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+2:21:47 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+2:21:56 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+2:21:56 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+2:21:56 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+2:21:56 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+2:21:56 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+2:21:56 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+2:21:56 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+2:21:56 PM [vite] (client) page reload .svelte-kit/generated/root.js
+2:21:56 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+2:21:56 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+2:22:12 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+2:22:12 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+2:22:12 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+2:22:12 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+2:22:12 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+2:22:12 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+2:22:12 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+2:22:12 PM [vite] (client) page reload .svelte-kit/generated/root.js
+2:22:12 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+2:22:12 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+2:22:15 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+2:22:15 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+2:22:15 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+2:22:15 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+2:22:15 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+2:22:15 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+2:22:15 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+2:22:15 PM [vite] (client) page reload .svelte-kit/generated/root.js
+2:22:15 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+2:22:15 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+2:22:24 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+2:22:24 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+2:22:24 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+2:22:24 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+2:22:24 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+2:22:24 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+2:22:24 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+2:22:24 PM [vite] (client) page reload .svelte-kit/generated/root.js
+2:22:24 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+2:22:24 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

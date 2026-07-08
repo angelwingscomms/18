@@ -3,6 +3,7 @@ import { getContext, setContext } from 'svelte';
 import { get_tool_declarations } from './gemini-live-dispatcher';
 import type { ChatMsg, Note } from './types';
 import { model_options } from './types';
+import { TTSState } from './tts-state.svelte';
 
 let note_id_counter = 0;
 function new_note_id() { return 'n' + (++note_id_counter); }
@@ -90,6 +91,8 @@ export class VoiceState {
 			this.qdrant_call('payload', n.i, undefined, n.b);
 		}
 	}
+
+	tts = $state<TTSState | null>(null);
 
 	show_settings = $state(false);
 	show_voice_menu = $state(false);
@@ -222,6 +225,9 @@ export class VoiceState {
 			this.gemini_live_audio_ctx.close();
 			this.gemini_live_audio_ctx = null;
 		}
+
+		this.tts?.dispose();
+		this.tts = null;
 
 		this.gemini_live_audio_queue = [];
 		this.gemini_live_audio_playing = false;
@@ -536,6 +542,40 @@ export class VoiceState {
 		this.notes = [...this.notes];
 		this.qdrant_call('payload', note.i, note.t);
 		return `Renamed note to "${title}".`;
+	}
+
+	async init_tts(): Promise<void> {
+		if (!this.tts) {
+			this.tts = new TTSState();
+			await this.tts.init();
+		} else if (!this.tts.isModelLoaded && !this.tts.isModelLoading) {
+			await this.tts.loadModel();
+		}
+	}
+
+	async play_note(note_id: string): Promise<void> {
+		const note = this.notes.find(n => n.i === note_id);
+		if (!note || !note.b.trim()) {
+			this.add_toast('Note is empty', 'e');
+			return;
+		}
+		try {
+			if (!this.tts || (!this.tts.isModelLoaded && !this.tts.isModelLoading)) {
+				this.add_toast('Loading voice model...');
+				await this.init_tts();
+			}
+			if (this.tts?.error) {
+				this.add_toast('TTS error: ' + this.tts.error, 'e');
+				return;
+			}
+			await this.tts?.playNote(note_id, note.b);
+		} catch (e) {
+			this.add_toast('Playback error: ' + (e instanceof Error ? e.message : String(e)), 'e');
+		}
+	}
+
+	stop_playback(): void {
+		this.tts?.stop();
 	}
 
 	gemini_live_handle(msg: any) {

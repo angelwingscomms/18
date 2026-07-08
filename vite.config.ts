@@ -14,6 +14,15 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	],
+	server: {
+		headers: {
+			'Cross-Origin-Opener-Policy': 'same-origin',
+			'Cross-Origin-Embedder-Policy': 'require-corp',
+		},
+	},
+	optimizeDeps: {
+		exclude: ['onnxruntime-web'],
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

@@ -3,6 +3,8 @@
 	import MarkIcon from '$lib/components/icons/mark-icon.svelte';
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
+	import PlayIcon from '$lib/components/icons/play-icon.svelte';
+	import PauseIcon from '$lib/components/icons/pause-icon.svelte';
 
 	const v = get_voice_state();
 
@@ -51,10 +53,32 @@
 <div class="note-panel">
 	<div class="note-header">
 		<div class="note-tabs">
-			<button class="note-toggle" onclick={() => v.show_note = !v.show_note} title="Toggle note">
-				<MarkIcon size={13} color="#888" />
-				<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
-			</button>
+			<div class="note-toggle-row">
+				<button class="note-toggle" onclick={() => v.show_note = !v.show_note} title="Toggle note">
+					<MarkIcon size={13} color="#888" />
+					<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
+				</button>
+				{#if v.show_note && v.active_note}
+					<div class="tts-controls">
+						{#if v.tts?.isPlaying && v.tts?.currentNoteId === v.active_note_id}
+							<button class="tts-btn" onclick={() => v.tts?.togglePause()} title={v.tts?.isPaused ? 'Resume' : 'Pause'}>
+								<PauseIcon size={13} color="#4a9eff" />
+							</button>
+							<button class="tts-btn" onclick={() => v.stop_playback()} title="Stop">
+								<XIcon size={12} color="#f66" />
+							</button>
+						{:else if v.tts?.isModelLoading}
+							<span class="tts-loading" title="Loading voice model...">
+								<span class="tts-spinner"></span>
+							</span>
+						{:else}
+							<button class="tts-btn" onclick={() => v.play_note(v.active_note_id!)} title="Read aloud">
+								<PlayIcon size={13} color="#888" />
+							</button>
+						{/if}
+					</div>
+				{/if}
+			</div>
 			{#if v.show_note}
 				<div class="tabs-scroll">
 					{#each v.notes as note (note.i)}
@@ -88,6 +112,14 @@
 				</div>
 			{/if}
 		</div>
+		{#if v.tts?.isPlaying && v.active_note}
+			<div class="tts-progress-bar">
+				<div class="tts-progress-fill" style="width: {v.tts.progress}%"></div>
+			</div>
+			{#if v.tts.currentText}
+				<div class="tts-current-text">{v.tts.currentText}</div>
+			{/if}
+		{/if}
 	</div>
 	{#if v.show_note && v.active_note}
 		<textarea
@@ -266,5 +298,77 @@
 
 	.note-textarea::placeholder {
 		color: #444;
+	}
+
+	.note-toggle-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.tts-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.tts-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		line-height: 0;
+		transition: background 0.15s;
+	}
+
+	.tts-btn:hover {
+		background: rgba(255,255,255,0.08);
+	}
+
+	.tts-loading {
+		display: flex;
+		align-items: center;
+		padding: 2px;
+	}
+
+	.tts-spinner {
+		width: 12px;
+		height: 12px;
+		border: 2px solid rgba(74,158,255,0.2);
+		border-top-color: #4a9eff;
+		border-radius: 50%;
+		animation: tts-spin 0.8s linear infinite;
+	}
+
+	@keyframes tts-spin {
+		to { transform: rotate(360deg); }
+	}
+
+	.tts-progress-bar {
+		height: 2px;
+		background: rgba(255,255,255,0.06);
+		border-radius: 1px;
+		margin-top: 0.5rem;
+		overflow: hidden;
+	}
+
+	.tts-progress-fill {
+		height: 100%;
+		background: #4a9eff;
+		border-radius: 1px;
+		transition: width 0.3s ease;
+	}
+
+	.tts-current-text {
+		font-size: 0.6875rem;
+		color: #666;
+		margin-top: 0.25rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 </style>

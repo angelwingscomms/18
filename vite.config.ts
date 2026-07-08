@@ -19,9 +19,15 @@ export default defineConfig({
 			'Cross-Origin-Opener-Policy': 'same-origin',
 			'Cross-Origin-Embedder-Policy': 'require-corp',
 		},
+		fs: {
+			allow: ['..'],
+		},
 	},
 	optimizeDeps: {
-		exclude: ['onnxruntime-web'],
+		exclude: ['onnxruntime-web', 'piper-tts-web'],
+	},
+	worker: {
+		format: 'es',
 	},
 	test: {
 		expect: { requireAssertions: true },

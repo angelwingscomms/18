@@ -78,3 +78,16 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 10:19:17 AM [vite] (client) page reload .svelte-kit/generated/root.js
 10:19:17 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
 10:19:18 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+10:35:03 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+10:35:03 AM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+10:35:13 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+10:35:13 AM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+10:40:18 AM [vite] vite.config.ts changed, restarting server...
+10:40:19 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
+10:40:19 AM [vite] (ssr) Re-optimizing dependencies because lockfile has changed
+10:40:20 AM [vite] (ssr) [optimizer] bundling dependencies...
+10:40:20 AM [vite] server restarted.
+10:42:48 AM [vite] vite.config.ts changed, restarting server...
+10:42:48 AM [vite] (ssr) Re-optimizing dependencies because lockfile has changed
+10:42:48 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
+10:42:48 AM [vite] server restarted.

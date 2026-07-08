@@ -24,7 +24,7 @@ export default defineConfig({
 		},
 	},
 	optimizeDeps: {
-		exclude: ['onnxruntime-web', 'piper-tts-web'],
+		exclude: ['onnxruntime-web'],
 	},
 	worker: {
 		format: 'es',

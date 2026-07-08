@@ -3,7 +3,7 @@
 - always search net before doing anything, especially when there's an error in question
 - always code with extreme simplicity; be minimalist
 - speak extremely concisely; explain things like i'm 9 years old
-- never run `npm run build`
+- never run `npm run build`; use deno for everything (install, run, etc.)
 
 # Rules for software/web dev projects/folders
 

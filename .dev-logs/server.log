@@ -354,3 +354,30 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 5:41:28 PM [vite] (client) page reload .svelte-kit/generated/root.js
 5:41:28 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
 5:41:28 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+6:27:48 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+6:27:57 PM [vite] (ssr) page reload src/hooks.server.ts
+6:27:59 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:6:91 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:7:29 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:8:27 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:115:4 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:115:4 Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+6:28:25 PM [vite] (client) hmr update /src/routes/+layout.svelte, /src/routes/+layout.svelte?svelte&type=style&lang.css
+6:28:25 PM [vite] (ssr) page reload src/routes/+layout.svelte
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:6:91 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:7:29 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:8:27 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:115:4 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+6:28:25 PM [vite-plugin-svelte] src/routes/+layout.svelte:115:4 Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+6:28:26 PM [vite] (client) dependency optimized: @paystack/inline-js
+6:28:29 PM [vite] (ssr) page reload src/routes/api/voice/gemini-live/key/+server.ts

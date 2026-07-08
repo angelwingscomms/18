@@ -99,3 +99,121 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 2:22:24 PM [vite] (client) page reload .svelte-kit/generated/root.js
 2:22:24 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
 2:22:24 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+4:46:32 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+4:46:32 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+4:46:40 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+4:46:40 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+4:46:45 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+4:46:45 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+4:47:03 PM [vite-plugin-svelte] src/routes/+page.svelte:19:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:03 PM [vite] (client) hmr update /src/routes/+page.svelte
+4:47:03 PM [vite] (ssr) page reload src/routes/+page.svelte
+4:47:03 PM [vite-plugin-svelte] src/lib/components/chat/BinauralModal.svelte:9:4 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+4:47:04 PM [vite-plugin-svelte] src/routes/+page.svelte:19:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:08 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:08 PM [vite] (client) hmr update /src/routes/+page.svelte
+4:47:08 PM [vite] (ssr) page reload src/routes/+page.svelte
+4:47:08 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:22 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:22 PM [vite] (client) hmr update /src/routes/+page.svelte
+4:47:22 PM [vite] (ssr) page reload src/routes/+page.svelte
+4:47:22 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:27 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:27 PM [vite] (client) hmr update /src/routes/+page.svelte
+4:47:27 PM [vite] (ssr) page reload src/routes/+page.svelte
+4:47:27 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:32 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:32 PM [vite] (client) hmr update /src/routes/+page.svelte?svelte&type=style&lang.css
+4:47:32 PM [vite] (ssr) page reload src/routes/+page.svelte
+4:47:38 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:38 PM [vite-plugin-svelte] src/routes/+page.svelte:23:16 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:38 PM [vite-plugin-svelte] src/routes/+page.svelte:23:25 This reference only captures the initial value of `binaural`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:38 PM [vite] (client) hmr update /src/routes/+page.svelte
+4:47:38 PM [vite] (ssr) page reload src/routes/+page.svelte
+4:47:38 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:38 PM [vite-plugin-svelte] src/routes/+page.svelte:23:16 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:38 PM [vite-plugin-svelte] src/routes/+page.svelte:23:25 This reference only captures the initial value of `binaural`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:50 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+4:47:50 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+4:47:50 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+4:47:50 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+4:47:50 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+4:47:50 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+4:47:50 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+4:47:50 PM [vite] (client) page reload .svelte-kit/generated/root.js
+4:47:50 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+4:47:50 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+4:47:50 PM [vite-plugin-svelte] src/routes/+page.svelte:20:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:50 PM [vite-plugin-svelte] src/routes/+page.svelte:23:16 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:50 PM [vite-plugin-svelte] src/routes/+page.svelte:23:25 This reference only captures the initial value of `binaural`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+4:47:51 PM [vite-plugin-svelte] src/lib/components/chat/BinauralModal.svelte:9:4 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+4:47:56 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+4:47:56 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+4:47:56 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+4:47:56 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+4:47:56 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+4:47:56 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+4:47:56 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+4:47:56 PM [vite] (client) page reload .svelte-kit/generated/root.js
+4:47:56 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+4:47:56 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+4:48:12 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+4:48:12 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+4:48:12 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+4:48:12 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+4:48:12 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+4:48:12 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+4:48:12 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+4:48:12 PM [vite] (client) page reload .svelte-kit/generated/root.js
+4:48:12 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+4:48:12 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+4:48:49 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+4:48:49 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+4:48:49 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+4:48:49 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+4:48:49 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+4:48:49 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+4:48:49 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+4:48:49 PM [vite] (client) page reload .svelte-kit/generated/root.js
+4:48:49 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+4:48:49 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+4:48:54 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+4:48:54 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+4:48:54 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+4:48:54 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+4:48:54 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+4:48:54 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+4:48:54 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+4:48:54 PM [vite] (client) page reload .svelte-kit/generated/root.js
+4:48:54 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+4:48:54 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+4:49:06 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+4:49:06 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+4:49:06 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+4:49:06 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+4:49:06 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+4:49:06 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+4:49:06 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+4:49:06 PM [vite] (client) page reload .svelte-kit/generated/root.js
+4:49:06 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+4:49:06 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

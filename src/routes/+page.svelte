@@ -9,11 +9,21 @@
 	import ChatPanel from '$lib/components/chat/ChatPanel.svelte';
 	import NotePanel from '$lib/components/chat/NotePanel.svelte';
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
+	import BinauralModal from '$lib/components/chat/BinauralModal.svelte';
+	import BinauralIcon from '$lib/components/icons/binaural-icon.svelte';
+	import { BinauralBeat } from '$lib/voice/binaural-beat.svelte.ts';
 
 	let voice: VoiceState | undefined = $state();
+	let binaural: BinauralBeat | undefined = $state();
 	if (browser) {
 		voice = new VoiceState();
 		set_voice_state(voice);
+		binaural = new BinauralBeat();
+	}
+	if (browser && voice && binaural) {
+		$effect(() => {
+			if (binaural) binaural.volume = voice.binaural_volume;
+		});
 	}
 
 	let recording = $derived(voice?.recording ?? false);
@@ -92,6 +102,27 @@
 							{/if}
 						</button>
 					{/if}
+
+					<div class="sub-sep"></div>
+
+					<button
+						class="control-dot {voice?.binaural_playing ? 'active' : ''}"
+						onclick={() => { binaural?.toggle(); if (voice) voice.binaural_playing = !!binaural?.playing; }}
+						title={voice?.binaural_playing ? 'Stop binaural' : 'Start binaural'}
+					>
+						<BinauralIcon size={16} color={voice?.binaural_playing ? '#4a9eff' : '#555'} playing={!!voice?.binaural_playing} />
+					</button>
+
+					<button
+						class="control-dot"
+						onclick={() => { if (voice) voice.show_binaural_settings = true; }}
+						title="Binaural settings"
+					>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+							<circle cx="12" cy="12" r="3" />
+							<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+						</svg>
+					</button>
 				</div>
 			</div>
 		</header>
@@ -103,6 +134,7 @@
 	</div>
 
 	<SettingsModal />
+	<BinauralModal />
 
 	{#if toasts.length > 0}
 		<div class="toast-container">
@@ -253,6 +285,17 @@
 	.control-dot.confirm {
 		border-color: rgba(255, 200, 50, 0.6);
 		background: rgba(255, 200, 50, 0.12);
+	}
+
+	.control-dot.active {
+		border-color: rgba(74, 158, 255, 0.5);
+		background: rgba(74, 158, 255, 0.12);
+	}
+
+	.sub-sep {
+		width: 1px;
+		height: 20px;
+		background: rgba(255,255,255,0.06);
 	}
 
 	.confirm-text {

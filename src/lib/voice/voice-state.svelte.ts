@@ -98,6 +98,11 @@ export class VoiceState {
 	show_voice_menu = $state(false);
 	show_model_menu = $state(false);
 
+	// ENTRANMENT - BINAURAL FREQUENCY
+	binaural_playing = $state(false);
+	binaural_volume = $state(browser ? parseFloat(localStorage.getItem('binaural_volume') ?? '0.3') : 0.3);
+	show_binaural_settings = $state(false);
+
 	toasts = $state<{ id: number; msg: string; t: string }[]>([]);
 	toast_id = $state(0);
 
@@ -153,6 +158,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('show_note', String(this.show_note));
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('binaural_volume', String(this.binaural_volume));
 		});
 		$effect(() => {
 			const g = this.voice_gain;

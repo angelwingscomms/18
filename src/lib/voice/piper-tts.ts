@@ -1,4 +1,4 @@
-import { PiperWebEngine } from 'piper-tts-web';
+import { PiperWebEngine, OnnxWebRuntime } from 'piper-tts-web';
 
 export type VoiceId = string;
 
@@ -42,7 +42,9 @@ export class PiperTTS {
 		this.loadError = null;
 
 		try {
-			this.engine = new PiperWebEngine();
+			this.engine = new PiperWebEngine({
+				onnxRuntime: new OnnxWebRuntime({ numThreads: 1 }),
+			});
 			this.isLoaded = true;
 		} catch (e) {
 			this.loadError = e instanceof Error ? e.message : String(e);

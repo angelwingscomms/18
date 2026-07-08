@@ -11,11 +11,10 @@ export interface VoiceInfo {
 
 export interface TTSConfig {
 	voiceId: VoiceId;
-	modelBase: string;
 	onChunk?: (pcm: Float32Array, chunkIndex: number, text: string) => void;
 	onDone?: () => void;
 	onError?: (err: Error) => void;
-	onProgress?: (progress: number, total: number) => void;
+	onProgress?: (downloaded: number, total: number) => void;
 }
 
 export const VOICES: Record<VoiceId, VoiceInfo> = {
@@ -24,6 +23,79 @@ export const VOICES: Record<VoiceId, VoiceInfo> = {
 	'en_US-ryan-medium': { name: 'Ryan Male', size: 40, lang: 'en' },
 	'en_US-libritts_r-medium': { name: 'LibriTTS R', size: 75, lang: 'en' },
 };
+
+const HF_BASE = 'https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0';
+const MODEL_URLS: Record<VoiceId, { model: string; config: string }> = {
+	'en_US-hfc_female-medium': {
+		model: `${HF_BASE}/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx`,
+		config: `${HF_BASE}/en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx.json`,
+	},
+	'en_US-lessac-medium': {
+		model: `${HF_BASE}/en/en_US/lessac/medium/en_US-lessac-medium.onnx`,
+		config: `${HF_BASE}/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json`,
+	},
+	'en_US-ryan-medium': {
+		model: `${HF_BASE}/en/en_US/ryan/medium/en_US-ryan-medium.onnx`,
+		config: `${HF_BASE}/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json`,
+	},
+	'en_US-libritts_r-medium': {
+		model: `${HF_BASE}/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx`,
+		config: `${HF_BASE}/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx.json`,
+	},
+};
+
+const DB_NAME = 'piper-models';
+const DB_VERSION = 1;
+
+function openDB(): Promise<IDBDatabase> {
+	return new Promise((resolve, reject) => {
+		const req = indexedDB.open(DB_NAME, DB_VERSION);
+		req.onupgradeneeded = () => {
+			const db = req.result;
+			if (!db.objectStoreNames.contains('models')) {
+				db.createObjectStore('models');
+			}
+		};
+		req.onsuccess = () => resolve(req.result);
+		req.onerror = () => reject(req.error);
+	});
+}
+
+async function loadCached(voiceId: VoiceId): Promise<{ model: ArrayBuffer; config: any } | null> {
+	try {
+		const db = await openDB();
+		const tx = db.transaction('models', 'readonly');
+		const store = tx.objectStore('models');
+		const req = store.get(voiceId);
+		return new Promise((resolve, reject) => {
+			req.onsuccess = () => {
+				const data = req.result;
+				if (data?.model && data?.config) {
+					resolve({ model: data.model, config: data.config });
+				} else {
+					resolve(null);
+				}
+				db.close();
+			};
+			req.onerror = () => { db.close(); reject(req.error); };
+		});
+	} catch {
+		return null;
+	}
+}
+
+async function saveCache(voiceId: VoiceId, model: ArrayBuffer, config: any): Promise<void> {
+	try {
+		const db = await openDB();
+		const tx = db.transaction('models', 'readwrite');
+		const store = tx.objectStore('models');
+		store.put({ model, config }, voiceId);
+		return new Promise((resolve, reject) => {
+			tx.oncomplete = () => { db.close(); resolve(); };
+			tx.onerror = () => { db.close(); reject(tx.error); };
+		});
+	} catch {}
+}
 
 const PHONEME_MAP: Record<string, number> = {
 	'a': 1, 'e': 2, 'i': 3, 'o': 4, 'u': 5,
@@ -76,9 +148,28 @@ export class PiperTTS {
 		if (this.isLoaded || this.isLoading) return;
 		this.isLoading = true;
 		this.loadError = null;
+
 		try {
+			const urls = MODEL_URLS[this.config.voiceId];
+			if (!urls) throw new Error(`Unknown voice: ${this.config.voiceId}`);
+
+			let modelBuf: ArrayBuffer;
+
+			const cached = await loadCached(this.config.voiceId);
+			if (cached) {
+				modelBuf = cached.model;
+			} else {
+				modelBuf = await this.download(urls.model);
+				let configData: any = null;
+				try {
+					const configRes = await fetch(urls.config);
+					if (configRes.ok) configData = await configRes.json();
+				} catch {}
+				await saveCache(this.config.voiceId, modelBuf, configData);
+			}
+
 			const session = await ort.InferenceSession.create(
-				`${this.config.modelBase}/${this.config.voiceId}.onnx`,
+				new Uint8Array(modelBuf),
 				{
 					executionProviders: ['wasm'],
 				}
@@ -91,6 +182,33 @@ export class PiperTTS {
 		} finally {
 			this.isLoading = false;
 		}
+	}
+
+	private async download(url: string): Promise<ArrayBuffer> {
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`Failed to download model: ${res.status} ${res.statusText}`);
+		const total = Number(res.headers.get('content-length')) || 0;
+		if (!res.body) return res.arrayBuffer();
+
+		const reader = res.body.getReader();
+		const chunks: Uint8Array[] = [];
+		let received = 0;
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			chunks.push(value);
+			received += value.length;
+			this.config.onProgress?.(received, total);
+		}
+
+		const merged = new Uint8Array(received);
+		let offset = 0;
+		for (const c of chunks) {
+			merged.set(c, offset);
+			offset += c.length;
+		}
+		return merged.buffer;
 	}
 
 	async synthesize(text: string): Promise<void> {

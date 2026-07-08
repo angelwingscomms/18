@@ -27,8 +27,6 @@ export class TTSState {
 	downloadProgress = $state(0);
 	error = $state<string | null>(null);
 
-	private modelBase = '/models';
-
 	get isEnabled() {
 		return browser && this.isModelLoaded && !this.error;
 	}
@@ -47,7 +45,6 @@ export class TTSState {
 			if (!this.tts) {
 				this.tts = new PiperTTS({
 					voiceId: this.voiceId,
-					modelBase: this.modelBase,
 					onChunk: (pcm, chunkIndex, text) => {
 						this.currentText = text;
 						this.progress = Math.min(100, (chunkIndex + 1) * 5);

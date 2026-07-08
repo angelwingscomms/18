@@ -44,3 +44,23 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 9:51:07 AM [vite] (client) page reload .svelte-kit/generated/root.js
 9:51:07 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
 9:51:07 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+
+[1;31m[404] GET /models/en_US-hfc_female-medium.onnx[0m
+
+[1;31m[404] GET /models/en_US-hfc_female-medium.onnx[0m
+9:55:40 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+9:55:40 AM [vite] (ssr) page reload src/lib/voice/piper-tts.ts
+9:55:48 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+9:55:48 AM [vite] (ssr) page reload src/lib/voice/tts-state.svelte.ts
+9:55:52 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+9:55:52 AM [vite] (ssr) page reload src/lib/voice/tts-state.svelte.ts
+9:56:01 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+9:56:01 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+9:56:01 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+9:56:01 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+9:56:01 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+9:56:01 AM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+9:56:01 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+9:56:01 AM [vite] (client) page reload .svelte-kit/generated/root.js
+9:56:01 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+9:56:01 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

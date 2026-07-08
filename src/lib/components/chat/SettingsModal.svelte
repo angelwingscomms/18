@@ -140,6 +140,17 @@
 			</section>
 
 			<section class="setting-section">
+				<h3 class="setting-label">Custom system prompt</h3>
+				<span class="toggle-desc" style="margin-top:-4px">Appended to the base system prompt sent to Gemini.</span>
+				<textarea
+					class="prompt-input"
+					placeholder="e.g. Always respond in Spanish"
+					bind:value={v.system_prompt}
+					rows="3"
+				></textarea>
+			</section>
+
+			<section class="setting-section">
 				<h3 class="setting-label">Voice gain</h3>
 				<span class="toggle-desc" style="margin-top:-4px">Amplify mic input before sending.</span>
 				<div class="gain-row">
@@ -454,6 +465,30 @@
 
 	.key-desc {
 		font-size: 0.7rem;
+		color: #555;
+	}
+
+	.prompt-input {
+		width: 100%;
+		border-radius: 10px;
+		border: 1px solid rgba(255,255,255,0.06);
+		background: rgba(0,0,0,0.3);
+		color: #ddd;
+		font-size: 0.8125rem;
+		padding: 0.625rem 0.75rem;
+		outline: none;
+		transition: border-color 0.2s;
+		box-sizing: border-box;
+		resize: vertical;
+		font-family: inherit;
+		line-height: 1.4;
+	}
+
+	.prompt-input:focus {
+		border-color: rgba(74, 158, 255, 0.4);
+	}
+
+	.prompt-input::placeholder {
 		color: #555;
 	}
 

@@ -288,3 +288,69 @@ https://svelte.dev/e/a11y_interactive_supports_focus
 5:20:46 PM [vite] (client) page reload .svelte-kit/generated/root.js
 5:20:46 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
 5:20:46 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:40:08 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:40:08 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+5:40:24 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:40:24 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+5:40:29 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:40:29 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+5:40:42 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte, /src/lib/components/chat/BinauralModal.svelte
+5:40:42 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+5:40:47 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+5:40:47 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:40:47 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:40:47 PM [vite] (client) hmr update /src/lib/components/chat/SettingsModal.svelte
+5:40:47 PM [vite] (ssr) page reload src/lib/components/chat/SettingsModal.svelte
+5:40:47 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+5:40:47 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:40:47 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:41:01 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+5:41:01 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:41:01 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:41:01 PM [vite] (client) hmr update /src/lib/components/chat/SettingsModal.svelte?svelte&type=style&lang.css
+5:41:01 PM [vite] (ssr) page reload src/lib/components/chat/SettingsModal.svelte
+5:41:08 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:41:08 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:41:08 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:41:08 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:41:08 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:41:08 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:41:08 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:41:08 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:41:08 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:41:09 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:41:09 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+5:41:09 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:41:09 PM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+5:41:14 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:41:14 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:41:14 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:41:14 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:41:14 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:41:14 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:41:14 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:41:14 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:41:14 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:41:14 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+5:41:28 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+5:41:28 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+5:41:28 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+5:41:28 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+5:41:28 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+5:41:28 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+5:41:28 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+5:41:28 PM [vite] (client) page reload .svelte-kit/generated/root.js
+5:41:28 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+5:41:28 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

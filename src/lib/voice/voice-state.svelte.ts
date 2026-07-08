@@ -71,6 +71,7 @@ export class VoiceState {
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
+	system_prompt = $state(browser && localStorage.getItem('system_prompt') || '');
 	notes = $state<Note[]>(browser ? JSON.parse(localStorage.getItem('notes') || '[]') : []);
 	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
 	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
@@ -149,6 +150,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('exa_key', this.exa_key);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('system_prompt', this.system_prompt);
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('notes', JSON.stringify(this.notes));
@@ -393,7 +397,7 @@ export class VoiceState {
 							prebuiltVoiceConfig: { voiceName: this.voice_name },
 						},
 					} as any,
-					systemInstruction: { parts: [{ text: SYS }] } as any,
+					systemInstruction: { parts: [{ text: this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS }] } as any,
 					tools: get_tool_declarations(),
 					contextWindowCompression: { slidingWindow: {} },
 					sessionResumption: {},
@@ -756,30 +760,30 @@ export class VoiceState {
 
 	async sendChatMessage(text: string) {
 		if (!text.trim() && this.pending_images.length === 0) return;
+		if (!this.gemini_live_can_send()) {
+			this.add_toast('Start voice chat first to send messages', 'e');
+			return;
+		}
 		const t = text.trim();
 		this.pending_clear = false;
 		const imgs = this.pending_images;
 		this.pending_images = [];
 		this.chat_input = '';
 		if (this.chat_input_ref) this.chat_input_ref.style.height = 'auto';
-		if (this.gemini_live_can_send()) {
-			this.output_turn_active = false;
-			this.chat_messages = [...this.chat_messages, { role: 'user', content: t || '(image)', images: imgs.length ? imgs : undefined }];
-			try {
-				const parts: Record<string, unknown>[] = [];
-				for (const img of imgs) {
-					const mime = img.split(';')[0].split(':')[1];
-					const data = img.split(',')[1];
-					parts.push({ media: { data, mimeType: mime } });
-				}
-				if (t) parts.push({ text: t });
-				for (const p of parts) {
-					this.gemini_live_session.sendRealtimeInput(p);
-				}
-			} catch {}
-		} else {
-			this.add_toast('Start voice chat first to send messages', 'e');
-		}
+		this.output_turn_active = false;
+		this.chat_messages = [...this.chat_messages, { role: 'user', content: t || '(image)', images: imgs.length ? imgs : undefined }];
+		try {
+			const parts: Record<string, unknown>[] = [];
+			for (const img of imgs) {
+				const mime = img.split(';')[0].split(':')[1];
+				const data = img.split(',')[1];
+				parts.push({ media: { data, mimeType: mime } });
+			}
+			if (t) parts.push({ text: t });
+			for (const p of parts) {
+				this.gemini_live_session.sendRealtimeInput(p);
+			}
+		} catch {}
 	}
 
 	stopChat() {

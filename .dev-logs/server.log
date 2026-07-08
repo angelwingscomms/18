@@ -91,3 +91,43 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 10:42:48 AM [vite] (ssr) Re-optimizing dependencies because lockfile has changed
 10:42:48 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
 10:42:48 AM [vite] server restarted.
+Using secrets defined in .env
+10:44:47 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:44:49 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+10:44:49 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+10:44:49 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:44:49 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+10:44:49 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+10:44:49 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+10:44:54 AM [vite-plugin-svelte] src/routes/+page.svelte:16:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:44:54 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:102:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:44:54 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:31:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+10:44:54 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:42:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+10:44:54 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:75:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
+https://svelte.dev/e/a11y_role_has_required_aria_props
+10:44:54 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:48:9 Screenreaders already announce `<img>` elements as an image
+https://svelte.dev/e/a11y_img_redundant_alt
+10:44:54 AM [vite-plugin-svelte] src/lib/components/chat/ChatPanel.svelte:204:1 Unused CSS selector ".copy-btn.copied"
+https://svelte.dev/e/css_unused_selector
+11:08:15 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+11:08:49 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+11:08:49 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+11:08:49 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+11:08:49 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+11:08:49 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+11:08:49 AM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+11:08:49 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+11:08:49 AM [vite] (client) page reload .svelte-kit/generated/root.js
+11:08:49 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+11:08:49 AM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

@@ -8,7 +8,6 @@ export interface Note {
 
 export const model_options = [
 	{ v: 'gemini-3.1-flash-live-preview', l: 'Gemini 3.1 Flash Live', d: 'Latest live model with native audio + web search' },
-	{ v: 'gemini-2.5-flash-native-audio-preview-12-2025', l: 'Gemini 2.5 Flash Native Audio', d: 'Deprecated — native audio dialog model' },
 ];
 
 export const voice_options = [

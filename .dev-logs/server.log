@@ -107,3 +107,15 @@ https://svelte.dev/e/a11y_click_events_have_key_events
 https://svelte.dev/e/state_referenced_locally
 5:29:48 AM [vite] (client) hmr update /src/routes/+page.svelte?svelte&type=style&lang.css
 5:29:48 AM [vite] (ssr) page reload src/routes/+page.svelte
+6:22:50 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+6:22:51 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+6:22:56 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+6:22:56 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+6:23:01 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+6:23:01 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+6:23:05 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+6:23:05 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+6:23:11 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+6:23:11 AM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+6:23:15 AM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/SettingsModal.svelte
+6:23:15 AM [vite] (ssr) page reload src/lib/voice/types.ts

@@ -46,6 +46,7 @@ export class VoiceState {
 
 	gemini_live_healthy = false;
 	gemini_live_closing = false;
+	tool_call_pending = false;
 
 	rnnoise_node: AudioWorkletNode | null = null;
 
@@ -380,6 +381,8 @@ export class VoiceState {
 					} as any,
 					systemInstruction: { parts: [{ text: SYS }] } as any,
 					tools: get_tool_declarations(),
+					contextWindowCompression: { slidingWindow: {} },
+					sessionResumption: {},
 				} as any,
 			});
 			this.gemini_live_session = session;
@@ -403,7 +406,7 @@ export class VoiceState {
 	}
 
 	gemini_process_audio = (e: AudioProcessingEvent) => {
-		if (this.voice_muted || this.gemini_live_closing) return;
+		if (this.voice_muted || this.gemini_live_closing || this.tool_call_pending) return;
 		if (!this.gemini_live_can_send()) return;
 		const input = e.inputBuffer.getChannelData(0);
 		const nativeRate = this.gemini_live_audio_ctx?.sampleRate || 48000;
@@ -437,6 +440,7 @@ export class VoiceState {
 
 	send_gemini_tool_response(input: Record<string, unknown>) {
 		if (!this.gemini_live_can_send() || this.gemini_live_closing) return;
+		this.tool_call_pending = false;
 		try {
 			this.gemini_live_session.sendToolResponse(input);
 		} catch {}
@@ -539,6 +543,7 @@ export class VoiceState {
 			console.log('[voice] serverContent:', JSON.stringify({ ...msg.serverContent, modelTurn: msg.serverContent.modelTurn ? { parts: msg.serverContent.modelTurn.parts?.map((p: any) => ({ ...p, inlineData: p.inlineData ? { mimeType: p.inlineData.mimeType, data: p.inlineData.data?.slice(0, 50) + '...' } : undefined })) } : undefined }));
 		}
 		if (msg.toolCall?.functionCalls?.length) {
+			this.tool_call_pending = true;
 			this.interrupt_audio();
 			this.start_thinking_sound();
 			(async () => {

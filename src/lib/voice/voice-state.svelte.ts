@@ -10,6 +10,7 @@ function new_note_id() { return 'n' + (++note_id_counter); }
 const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. When the conversation starts, greet the user.
 
 You have a tool called exa_search that searches the web. Only use exa_search when the user specifically asks you to search the web. Do not search on your own initiative.
+You also have a tool called web_fetch that fetches and reads the content of a specific URL. Use it when the user gives you a URL and asks you to read, summarize, or analyze its content. You can paginate through long pages using offset/limit.
 
 You also have a tool called clear_chat that clears all chat messages. Before calling clear_chat, you must ask the user for confirmation. Only proceed if the user explicitly confirms.
 
@@ -576,6 +577,37 @@ export class VoiceState {
 							this.send_gemini_tool_response({
 								functionResponses: [{ id: fc.id, name: fc.name, response: { result: snippets } }],
 							});
+						} catch (e) {
+							this.send_gemini_tool_response({
+								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }],
+							});
+						}
+					} else if (fc.name === 'web_fetch') {
+						try {
+							const res = await fetch('/api/voice/web-fetch', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ url: fc.args.url, offset: fc.args.offset ?? 1, limit: fc.args.limit ?? 2000 }),
+							});
+							const data = await res.json();
+							if (data.error) {
+								this.send_gemini_tool_response({
+									functionResponses: [{ id: fc.id, name: fc.name, response: { error: data.error } }],
+								});
+							} else {
+								const lines = data.lines as string[];
+								const total = data.total as number;
+								const offset = data.offset as number;
+								const start = offset;
+								const last = start + lines.length - 1;
+								let out = `URL: ${fc.args.url}\n`;
+								out += lines.map((line, i) => `${start + i}: ${line}`).join('\n');
+								if (last < total) out += `\n(Showing lines ${start}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
+								else out += `\n(End - total ${total} lines)`;
+								this.send_gemini_tool_response({
+									functionResponses: [{ id: fc.id, name: fc.name, response: { result: out } }],
+								});
+							}
 						} catch (e) {
 							this.send_gemini_tool_response({
 								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }],

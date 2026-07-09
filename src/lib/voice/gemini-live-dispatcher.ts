@@ -22,6 +22,28 @@ export function get_tool_declarations() {
 					},
 				},
 				{
+					name: 'web_fetch',
+					description: 'Fetch and read the content of a webpage. Use offset/limit to paginate through long content (like reading a book page by page).',
+					parameters: {
+						type: 'object',
+						properties: {
+							url: {
+								type: 'string',
+								description: 'The full URL to fetch (e.g. https://example.com/page)',
+							},
+							offset: {
+								type: 'number',
+								description: 'Line number to start reading from (1-indexed, default 1)',
+							},
+							limit: {
+								type: 'number',
+								description: 'Maximum number of lines to return (default 2000)',
+							},
+						},
+						required: ['url'],
+					},
+				},
+				{
 					name: 'read_note',
 					description: 'Read lines from a note. If note_id is omitted, reads the active note.',
 					parameters: {

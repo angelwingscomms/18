@@ -23,9 +23,6 @@ export default defineConfig({
 			allow: ['..'],
 		},
 	},
-	optimizeDeps: {
-		exclude: ['onnxruntime-web'],
-	},
 	worker: {
 		format: 'es',
 	},

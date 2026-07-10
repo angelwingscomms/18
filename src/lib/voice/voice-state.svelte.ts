@@ -750,7 +750,7 @@ export class VoiceState {
 		}, 200);
 	}
 
-	async sendChatMessage(text: string) {
+	async sendChatMessage(text: string, hidden_prefix?: string) {
 		if (!text.trim() && this.pending_images.length === 0) return;
 		if (!this.gemini_live_can_send()) {
 			this.add_toast('Start voice chat first to send messages', 'e');
@@ -771,11 +771,16 @@ export class VoiceState {
 				const data = img.split(',')[1];
 				parts.push({ media: { data, mimeType: mime } });
 			}
-			if (t) parts.push({ text: t });
+			if (t) parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${t}` : t });
 			for (const p of parts) {
 				this.gemini_live_session.sendRealtimeInput(p);
 			}
 		} catch {}
+	}
+
+	async sendChatMessageWithDeepSearch(text: string) {
+		const prefix = `[SYSTEM OVERRIDE: Before answering, you MUST use the exa_search tool with type='deep-reasoning' to search the web for current information about the user's query]`;
+		return this.sendChatMessage(text, prefix);
 	}
 
 	stopChat() {

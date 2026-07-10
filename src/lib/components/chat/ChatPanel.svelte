@@ -107,6 +107,11 @@
 				disabled={!v.chat_input.trim() && v.pending_images.length === 0}
 				class="send-btn"
 			>→</button>
+			<button
+				onclick={() => v.sendChatMessageWithDeepSearch(v.chat_input)}
+				disabled={!v.chat_input.trim() && v.pending_images.length === 0}
+				class="deep-btn"
+			>🔍 Deep</button>
 		</div>
 	</div>
 </div>
@@ -287,6 +292,36 @@
 	}
 
 	.send-btn:active:not(:disabled) {
+		transform: scale(0.95);
+	}
+
+	.deep-btn {
+		height: 40px;
+		padding: 0 0.75rem;
+		border-radius: 10px;
+		border: none;
+		background: rgba(74, 158, 255, 0.15);
+		color: #4a9eff;
+		font-size: 0.8125rem;
+		cursor: pointer;
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		transition: all 0.15s;
+		white-space: nowrap;
+	}
+
+	.deep-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.deep-btn:hover:not(:disabled) {
+		background: rgba(74, 158, 255, 0.25);
+		transform: scale(1.05);
+	}
+
+	.deep-btn:active:not(:disabled) {
 		transform: scale(0.95);
 	}
 

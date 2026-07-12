@@ -1,0 +1,40 @@
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+. prepare$ svelte-kit sync || echo ''
+. prepare: Loading Svelte config from Vite config failed: Error: ENOENT: no such file or directory, stat '/home/ed/i/18/static/onnx'
+. prepare:     at Object.statSync (node:fs:1725:25)
+. prepare:     at walk (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/utils.js:73:11)
+. prepare:     at list_files (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/utils.js:83:26)
+. prepare:     at create_assets (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/create_manifest_data/index.js:59:9)
+. prepare:     at create_manifest_data (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/create_manifest_data/index.js:31:17)
+. prepare:     at create (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/sync.js:32:24)
+. prepare:     at Module.all (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/sync.js:77:9)
+. prepare:     at BasicMinimalPluginContext.handler (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/exports/vite/index.js:449:28)
+. prepare:     at runConfigHook (file:///home/ed/i/18/node_modules/.pnpm/vite@8.1.3_@types+node@24.13.2_esbuild@0.28.1/node_modules/vite/dist/node/chunks/node.js:35760:42)
+. prepare:     at async resolveConfig (file:///home/ed/i/18/node_modules/.pnpm/vite@8.1.3_@types+node@24.13.2_esbuild@0.28.1/node_modules/vite/dist/node/chunks/node.js:35195:11) {
+. prepare:   errno: -2,
+. prepare:   code: 'ENOENT',
+. prepare:   syscall: 'stat',
+. prepare:   path: '/home/ed/i/18/static/onnx'
+. prepare: } 
+. prepare: Falling back to loading svelte.config.js
+. prepare: > ENOENT: no such file or directory, stat '/home/ed/i/18/static/onnx'
+. prepare:     at Object.statSync (node:fs:1725:25)
+. prepare:     at walk (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/utils.js:73:11)
+. prepare:     at list_files (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/utils.js:83:26)
+. prepare:     at create_assets (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/create_manifest_data/index.js:59:9)
+. prepare:     at create_manifest_data (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/create_manifest_data/index.js:31:17)
+. prepare:     at Module.all_types (file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/core/sync/sync.js:87:24)
+. prepare:     at file:///home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/cli.js:100:8
+. prepare: No Svelte config file found in /home/ed/i/18 - using SvelteKit's default configuration without an adapter.
+. prepare: Done
+Done in 3.8s using pnpm v11.5.2
+$ vite dev --port 1800
+ENOENT: no such file or directory, stat '/home/ed/i/18/static/onnx'
+
+  VITE v8.1.3  ready in 2941 ms
+
+  ➜  Local:   http://localhost:1800/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help

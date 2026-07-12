@@ -490,32 +490,42 @@ export class VoiceState {
 		return out;
 	}
 
-	edit_note(oldString: string, newString: string, replaceAll = false, note_id?: string): string {
+	async edit_note(oldString: string, newString: string, replaceAll = false, note_id?: string): Promise<string> {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
 		if (oldString === '') {
-			note.b = note.b + newString;
+			note.b = note.b + '\n' + newString;
 			this.notes = [...this.notes];
 			this.qdrant_call('payload', note.i, undefined, note.b);
 			return 'Appended to note.';
 		}
-		const content = note.b;
-		if (replaceAll) {
-			const count = content.split(oldString).length - 1;
-			if (count === 0) return 'Error: oldString not found in note.';
-			note.b = content.split(oldString).join(newString);
-			this.notes = [...this.notes];
-			this.qdrant_call('payload', note.i, undefined, note.b);
-			return `Replaced ${count} occurrence(s) in note.`;
+		for (let attempt = 0; attempt < 9; attempt++) {
+			const content = note.b;
+			if (replaceAll) {
+				const count = content.split(oldString).length - 1;
+				if (count > 0) {
+					note.b = content.split(oldString).join(newString);
+					this.notes = [...this.notes];
+					this.qdrant_call('payload', note.i, undefined, note.b);
+					return `Replaced ${count} occurrence(s) in note.`;
+				}
+			} else {
+				const first = content.indexOf(oldString);
+				if (first !== -1) {
+					const last_c = content.lastIndexOf(oldString);
+					if (first !== last_c) return 'Error: Found multiple matches. Use replaceAll or provide more context.';
+					note.b = content.substring(0, first) + newString + content.substring(first + oldString.length);
+					this.notes = [...this.notes];
+					this.qdrant_call('payload', note.i, undefined, note.b);
+					return 'Edited note.';
+				}
+			}
+			if (attempt < 8) await new Promise(r => setTimeout(r, 100));
 		}
-		const first = content.indexOf(oldString);
-		if (first === -1) return 'Error: oldString not found in note.';
-		const last_c = content.lastIndexOf(oldString);
-		if (first !== last_c) return 'Error: Found multiple matches. Use replaceAll or provide more context.';
-		note.b = content.substring(0, first) + newString + content.substring(first + oldString.length);
+		note.b = note.b + '\n' + newString;
 		this.notes = [...this.notes];
 		this.qdrant_call('payload', note.i, undefined, note.b);
-		return 'Edited note.';
+		return 'Appended to note (oldString not found after 9 attempts).';
 	}
 
 	list_notes(): string {
@@ -619,7 +629,7 @@ export class VoiceState {
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result: lines } }],
 						});
 					} else if (fc.name === 'edit_note') {
-						const result = this.edit_note(fc.args.oldString ?? '', fc.args.newString ?? '', fc.args.replaceAll ?? false, fc.args.note_id);
+						const result = await this.edit_note(fc.args.oldString ?? '', fc.args.newString ?? '', fc.args.replaceAll ?? false, fc.args.note_id);
 						this.send_gemini_tool_response({
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
 						});

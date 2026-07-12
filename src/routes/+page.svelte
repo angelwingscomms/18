@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import { VoiceState, set_voice_state } from '$lib/voice/voice-state.svelte.ts';
 	import MicIcon from '$lib/components/icons/mic-icon.svelte';
 	import MicMuteIcon from '$lib/components/icons/mic-mute-icon.svelte';
@@ -24,6 +25,9 @@
 			if (binaural) binaural.volume = voice.binaural_volume;
 		});
 	}
+	$effect(() => {
+		if (voice && $page.data.user?.id) voice.user_id = $page.data.user.id;
+	});
 
 	let recording = $derived(voice?.recording ?? false);
 	let voice_muted = $derived(voice?.voice_muted ?? false);

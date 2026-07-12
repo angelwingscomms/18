@@ -136,7 +136,13 @@
             placeholder="Exa API key"
             bind:value={v.exa_key}
           />
-          <span class="key-desc">Saved locally. Overrides server keys.</span>
+          <input
+            type="password"
+            class="key-input"
+            placeholder="OpenRouter API key"
+            bind:value={v.openrouter_key}
+          />
+          <span class="key-desc">Saved locally. Override server keys and note embeddings.</span>
         </div>
 
         <section class="setting-section">

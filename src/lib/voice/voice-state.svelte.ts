@@ -74,6 +74,7 @@ export class VoiceState {
 	tool_call_pending = false;
 	goaway_received = false;
 	reconnecting = false;
+	_user_id = '';
 
 	rnnoise_node: AudioWorkletNode | null = null;
 
@@ -97,6 +98,7 @@ export class VoiceState {
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
+	openrouter_key = $state(browser && localStorage.getItem('openrouter_key') || '');
 	system_prompt = $state(browser && localStorage.getItem('system_prompt') || '');
 	notes = $state<Record<string, Note>>(load_notes());
 	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
@@ -161,6 +163,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('exa_key', this.exa_key);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('openrouter_key', this.openrouter_key);
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('system_prompt', this.system_prompt);
@@ -503,6 +508,40 @@ export class VoiceState {
 		} finally {
 			this.reconnecting = false;
 		}
+	}
+
+	set user_id(v: string) {
+		if (this._user_id === v) return;
+		this._user_id = v;
+		if (v && localStorage.getItem('synced_user') !== v) this.sync_from_qdrant();
+	}
+
+	async sync_from_qdrant() {
+		if (!this._user_id) return;
+		try {
+			const res = await fetch('/api/voice/qdrant', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ a: 'scroll' }),
+			});
+			const data = await res.json();
+			if (!data.notes) return;
+			let changed = false;
+			for (const qn of data.notes) {
+				if (!this.notes[qn.i]) {
+					this.notes = { ...this.notes, [qn.i]: { i: qn.i, t: qn.t, b: qn.b } };
+					changed = true;
+				}
+			}
+			for (const [id, note] of Object.entries(this.notes)) {
+				fetch('/api/voice/qdrant', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ a: 'upsert', i: id, t: note.t, b: note.b }),
+				}).catch(() => {});
+			}
+			localStorage.setItem('synced_user', this._user_id);
+		} catch {}
 	}
 
 	gemini_process_audio = (e: AudioProcessingEvent) => {

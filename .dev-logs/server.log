@@ -361,3 +361,17 @@ https://svelte.dev/e/a11y_click_events_have_key_events
 9:13:49 PM [vite] (client) page reload .svelte-kit/generated/root.js
 9:13:49 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
 9:13:49 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+10:23:39 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/BinauralModal.svelte
+10:23:39 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+10:23:43 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/BinauralModal.svelte
+10:23:43 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+10:23:54 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+10:23:54 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+10:23:54 PM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+10:23:54 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+10:23:54 PM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+10:23:54 PM [vite] (ssr) page reload .svelte-kit/generated/shared/error-template.js
+10:23:54 PM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+10:23:54 PM [vite] (client) page reload .svelte-kit/generated/root.js
+10:23:54 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
+10:23:55 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte

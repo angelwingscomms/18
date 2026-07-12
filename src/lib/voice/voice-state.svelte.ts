@@ -5,8 +5,7 @@ import type { ChatMsg, Note } from './types';
 import { play } from 'cuelume';
 import { model_options } from './types';
 
-let note_id_counter = 0;
-function new_note_id() { return 'n' + (++note_id_counter); }
+function new_note_id() { return crypto.randomUUID(); }
 
 function load_notes(): Record<string, Note> {
 	if (!browser) return {};
@@ -130,10 +129,6 @@ export class VoiceState {
 	toast_id = $state(0);
 
 	constructor() {
-		note_id_counter = Math.max(0, ...Object.values(this.notes).map(n => {
-			const m = n.i.match(/^n(\d+)$/);
-			return m ? parseInt(m[1], 10) : 0;
-		}));
 		if (Object.keys(this.notes).length === 0) {
 			const i = new_note_id();
 			this.notes = { [i]: { i, t: 'Note', b: '' } };

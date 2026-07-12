@@ -72,6 +72,8 @@ export class VoiceState {
 	gemini_live_healthy = false;
 	gemini_live_closing = false;
 	tool_call_pending = false;
+	goaway_received = false;
+	reconnecting = false;
 
 	rnnoise_node: AudioWorkletNode | null = null;
 
@@ -318,6 +320,11 @@ export class VoiceState {
 			return;
 		}
 		this.gemini_live_closing = false;
+		this.goaway_received = false;
+		await this.connectLive();
+	}
+
+	async connectLive() {
 		try {
 			this.add_toast('Connecting voice...');
 			let key = this.gemini_key;
@@ -389,13 +396,11 @@ export class VoiceState {
 					onmessage: (msg: any) => { this.gemini_live_handle(msg); },
 					onerror: (e: any) => {
 						this.log('onerror code=' + e?.code + ' reason=' + e?.reason + ' message=' + e?.message + ' error=' + (e?.error?.message ?? e?.error ?? ''));
-						this.gemini_live_healthy = false;
-						if (!this.gemini_live_closing) this.cleanup();
+						this.handle_disconnect('error');
 					},
 					onclose: (e?: any) => {
 						this.log('onclose code=' + e?.code + ' reason="' + e?.reason + '" wasClean=' + e?.wasClean);
-						this.gemini_live_healthy = false;
-						if (!this.gemini_live_closing) this.cleanup();
+						this.handle_disconnect('close');
 					},
 				},
 				config: {
@@ -432,6 +437,71 @@ export class VoiceState {
 				this.add_toast('Voice setup error: ' + (e instanceof Error ? e.message : String(e)), 'e');
 			}
 			this.cleanup();
+			throw e;
+		}
+	}
+
+	handle_disconnect(reason: string) {
+		if (this.gemini_live_closing || this.reconnecting) return;
+		this.reconnecting = true;
+		this.gemini_live_healthy = false;
+		this.recording = false;
+		this.add_toast('Voice reconnecting...');
+		this.auto_reconnect();
+	}
+
+	async auto_reconnect() {
+		this.interrupt_audio();
+
+		if (this.gemini_live_processor) {
+			this.gemini_live_processor.onaudioprocess = null;
+			this.gemini_live_processor.disconnect();
+			this.gemini_live_processor = null;
+		}
+		if (this.gemini_live_voice_gain) {
+			this.gemini_live_voice_gain.disconnect();
+			this.gemini_live_voice_gain = null;
+		}
+		if (this.rnnoise_node) {
+			(this.rnnoise_node as any).destroy?.();
+			this.rnnoise_node.disconnect();
+			this.rnnoise_node = null;
+		}
+		if (this.gemini_live_mic_stream) {
+			this.gemini_live_mic_stream.getTracks().forEach(t => t.stop());
+			this.gemini_live_mic_stream = null;
+		}
+		if (this.gemini_live_audio_gain) {
+			this.gemini_live_audio_gain.disconnect();
+			this.gemini_live_audio_gain = null;
+		}
+		if (this.gemini_live_audio_ctx) {
+			await this.gemini_live_audio_ctx.close();
+			this.gemini_live_audio_ctx = null;
+		}
+		this.gemini_live_audio_queue = [];
+		this.gemini_live_audio_playing = false;
+		this.gemini_live_current_source = null;
+		this.thinking_sound_buf = null;
+		this.thinking_sound = null;
+
+		const session = this.gemini_live_session;
+		this.gemini_live_session = null;
+		if (session) {
+			try { session.close(); } catch {}
+		}
+
+		this.gemini_live_closing = false;
+		this.goaway_received = false;
+
+		try {
+			await this.connectLive();
+			this.add_toast('Voice reconnected');
+		} catch {
+			this.add_toast('Reconnect failed', 'e');
+			this.cleanup();
+		} finally {
+			this.reconnecting = false;
 		}
 	}
 
@@ -583,6 +653,11 @@ export class VoiceState {
 	}
 
 	gemini_live_handle(msg: any) {
+		if (msg.goAway) {
+			this.log('GoAway received, reason=' + (msg.goAway.reason || 'none'));
+			this.goaway_received = true;
+			this.add_toast('Voice session reconnecting...');
+		}
 		if (msg.serverContent) {
 			console.log('[voice] serverContent:', JSON.stringify({ ...msg.serverContent, modelTurn: msg.serverContent.modelTurn ? { parts: msg.serverContent.modelTurn.parts?.map((p: any) => ({ ...p, inlineData: p.inlineData ? { mimeType: p.inlineData.mimeType, data: p.inlineData.data?.slice(0, 50) + '...' } : undefined })) } : undefined }));
 		}

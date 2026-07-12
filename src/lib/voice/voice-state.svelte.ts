@@ -399,7 +399,11 @@ export class VoiceState {
 				} as any,
 			});
 			this.gemini_live_session = session;
-			try { session.sendRealtimeInput({ text: 'Hello' }); } catch {}
+			const msgs = this.chat_messages.filter(m => m.content);
+			const initial = msgs.length > 0
+				? `[CONTEXT]\n${msgs.slice(-20).map(m => `${m.role}: ${m.content}`).join('\n')}\n[/CONTEXT]\n\nHello`
+				: 'Hello';
+			try { session.sendRealtimeInput({ text: initial }); } catch {}
 		} catch (e) {
 			if (e instanceof DOMException && e.name === 'NotFoundError') {
 				try {

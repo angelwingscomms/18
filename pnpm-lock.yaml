@@ -26,6 +26,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      cuelume:
+        specifier: ^0.1.0
+        version: 0.1.0
       marked:
         specifier: ^18.0.5
         version: 18.0.5
@@ -1016,6 +1019,9 @@ packages:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
     engines: {node: '>=4'}
     hasBin: true
+
+  cuelume@0.1.0:
+    resolution: {integrity: sha512-J2RRt92Gh1a0ztnjwLEyLfGnDIiWz14vC9aTmg7ZgxRkEk8vR+QxFOz+v1tqntFvl06n5G4si8QCQgHfWjnneA==}
 
   data-uri-to-buffer@4.0.1:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
@@ -2600,6 +2606,8 @@ snapshots:
       which: 2.0.2
 
   cssesc@3.0.0: {}
+
+  cuelume@0.1.0: {}
 
   data-uri-to-buffer@4.0.1: {}
 

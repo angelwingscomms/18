@@ -2,6 +2,7 @@ import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
 import { get_tool_declarations } from './gemini-live-dispatcher';
 import type { ChatMsg, Note } from './types';
+import { play } from 'cuelume';
 import { model_options } from './types';
 
 let note_id_counter = 0;
@@ -257,6 +258,7 @@ export class VoiceState {
 		this.thinking_sound_buf = null;
 		this.thinking_sound = null;
 		this.chat_loading = false;
+		play('droplet');
 		this.log('cleanup: done');
 	}
 
@@ -387,6 +389,7 @@ export class VoiceState {
 						this.gemini_live_healthy = true;
 						this.recording = true;
 						this.add_toast('Voice connected');
+						play('sparkle');
 					},
 					onmessage: (msg: any) => { this.gemini_live_handle(msg); },
 					onerror: (e: any) => {
@@ -516,6 +519,7 @@ export class VoiceState {
 			note.b = note.b + '\n' + newString;
 			this.notes = { ...this.notes };
 			this.qdrant_call('payload', note.i, undefined, note.b);
+			play('tick');
 			return 'Appended to note.';
 		}
 		for (let attempt = 0; attempt < 9; attempt++) {
@@ -526,6 +530,7 @@ export class VoiceState {
 					note.b = content.split(oldString).join(newString);
 					this.notes = { ...this.notes };
 					this.qdrant_call('payload', note.i, undefined, note.b);
+					play('tick');
 					return `Replaced ${count} occurrence(s) in note.`;
 				}
 			} else {
@@ -536,6 +541,7 @@ export class VoiceState {
 					note.b = content.substring(0, first) + newString + content.substring(first + oldString.length);
 					this.notes = { ...this.notes };
 					this.qdrant_call('payload', note.i, undefined, note.b);
+					play('tick');
 					return 'Edited note.';
 				}
 			}
@@ -544,6 +550,7 @@ export class VoiceState {
 		note.b = note.b + '\n' + newString;
 		this.notes = { ...this.notes };
 		this.qdrant_call('payload', note.i, undefined, note.b);
+		play('tick');
 		return 'Appended to note (oldString not found after 9 attempts).';
 	}
 

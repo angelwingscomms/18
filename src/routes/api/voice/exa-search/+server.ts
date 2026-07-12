@@ -1,10 +1,9 @@
-import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	const { query, type = 'auto', apiKey } = await request.json();
-	const exaKey = apiKey || env.EXA_API_KEY;
+	const exaKey = apiKey || await platform!.env.EXA_API_KEY.get();
 
 	const res = await fetch('https://api.exa.ai/search', {
 		method: 'POST',

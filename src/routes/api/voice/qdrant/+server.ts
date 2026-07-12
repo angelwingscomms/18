@@ -1,21 +1,29 @@
-import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { decode_session } from '$lib/server/session';
 
-const qdrant = new QdrantClient({ url: env.QDRANT_URL, apiKey: env.QDRANT_KEY });
+let qdrant: QdrantClient | null = null;
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
-	const s = await decode_session(cookies.get('session'));
+async function get_client(env: Env): Promise<QdrantClient> {
+	if (!qdrant) {
+		const [url, key] = await Promise.all([env.QDRANT_URL.get(), env.QDRANT_KEY.get()]);
+		qdrant = new QdrantClient({ url, apiKey: key });
+	}
+	return qdrant;
+}
+
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
+	const s = await decode_session(cookies.get('session'), platform!.env);
 	const uid = s?.user?.id;
 	if (!uid) return json({ ok: false, e: 'not authenticated' });
 
 	const { a: action, i: id, t, b } = await request.json();
+	const c = await get_client(platform!.env);
 
 	try {
 		if (action === 'upsert') {
-			await qdrant.upsert('i', {
+			await c.upsert('i', {
 				wait: true,
 				points: [{
 					id,
@@ -28,16 +36,16 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			if (t !== undefined) p.t = t;
 			if (b !== undefined) p.b = b;
 			if (Object.keys(p).length === 0) return json({ ok: false, e: 'no fields' });
-			await qdrant.setPayload('i', { wait: true, payload: p, points: [id] });
+			await c.setPayload('i', { wait: true, payload: p, points: [id] });
 		} else if (action === 'delete') {
-			await qdrant.delete('i', { wait: true, points: [id] });
+			await c.delete('i', { wait: true, points: [id] });
 		} else if (action === 'scroll') {
-			let points = (await qdrant.scroll('i', {
+			let points = (await c.scroll('i', {
 				filter: { must: [{ key: 's', match: { value: uid } }] },
 				limit: 999,
 			})).points;
 			if (points.length === 0) {
-				points = (await qdrant.scroll('i', {
+				points = (await c.scroll('i', {
 					filter: { must: [{ key: 's', match: { value: '18' } }] },
 					limit: 999,
 				})).points;

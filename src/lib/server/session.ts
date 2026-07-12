@@ -1,5 +1,3 @@
-import { env } from '$env/dynamic/private';
-
 function b64(s: string): string {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -10,26 +8,28 @@ function ub64(s: string): string {
   return atob(s);
 }
 
-async function get_key(): Promise<CryptoKey> {
-  const secret = new TextEncoder().encode(env.SECRET).slice(0, 32);
-  return crypto.subtle.importKey('raw', secret, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+async function get_key(secret: string): Promise<CryptoKey> {
+  const s = new TextEncoder().encode(secret).slice(0, 32);
+  return crypto.subtle.importKey('raw', s, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
 
-export async function encode_session(data: { id: string; name: string; picture?: string; email?: string }): Promise<string> {
+export async function encode_session(data: { id: string; name: string; picture?: string; email?: string }, env: Env): Promise<string> {
+  const secret = await env.SECRET.get();
   const p = { u: data.id, n: data.name, p: data.picture, m: data.email, e: Date.now() + 604800000 };
   const raw = b64(JSON.stringify(p));
-  const k = await get_key();
+  const k = await get_key(secret);
   const sig = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(raw));
   const out = raw + '.' + b64(String.fromCharCode(...new Uint8Array(sig)));
   return out;
 }
 
-export async function decode_session(c: string | undefined | null): Promise<{ user: { id: string; name: string; picture?: string; email?: string } } | null> {
+export async function decode_session(c: string | undefined | null, env: Env): Promise<{ user: { id: string; name: string; picture?: string; email?: string } } | null> {
   if (!c) return null;
   const [raw, sig] = c.split('.');
   if (!raw || !sig) return null;
   try {
-    const k = await get_key();
+    const secret = await env.SECRET.get();
+    const k = await get_key(secret);
     const sig_buf = Uint8Array.from(ub64(sig), c => c.charCodeAt(0)).buffer as ArrayBuffer;
     const valid = await crypto.subtle.verify('HMAC', k, sig_buf, new TextEncoder().encode(raw));
     if (!valid) return null;

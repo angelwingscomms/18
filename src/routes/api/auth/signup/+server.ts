@@ -5,7 +5,7 @@ import { save_user, find_user_by_email } from '$lib/server/user';
 import { encode_session } from '$lib/server/session';
 import { new_id } from '$lib/util/new_id';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
   const body = await request.json().catch(() => null);
   const email = body?.email;
   const password = body?.password;
@@ -14,16 +14,16 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     return json({ error: 'Email required and password min 8 characters' }, { status: 400 });
   }
 
-  const existing = await find_user_by_email(email);
+  const existing = await find_user_by_email(email, platform!.env);
   if (existing) {
     return json({ error: 'Email already registered' }, { status: 409 });
   }
 
   const hash = await bcrypt.hash(password, 10);
   const user_id = new_id();
-  await save_user(null, user_id, name || email.split('@')[0], undefined, email, hash);
+  await save_user(null, user_id, name || email.split('@')[0], undefined, email, hash, platform!.env);
 
-  const session = await encode_session({ id: user_id, name: name || email.split('@')[0], email });
+  const session = await encode_session({ id: user_id, name: name || email.split('@')[0], email }, platform!.env);
   cookies.set('session', session, { path: '/', httpOnly: true, maxAge: 604800, sameSite: 'lax' });
 
   return json({ success: true, user: { id: user_id, email, name: name || email.split('@')[0] } });

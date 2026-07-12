@@ -1,13 +1,15 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { env } from '$env/dynamic/private';
 import type { User } from '$lib/types/user';
 
 const C = 'i';
 const local = new Map<string, User>();
 let q: QdrantClient | null = null;
 
-function client(): QdrantClient {
-	if (!q) q = new QdrantClient({ url: env.QDRANT_URL, apiKey: env.QDRANT_KEY, checkCompatibility: false });
+async function client(env: Env): Promise<QdrantClient> {
+	if (!q) {
+		const [url, key] = await Promise.all([env.QDRANT_URL.get(), env.QDRANT_KEY.get()]);
+		q = new QdrantClient({ url, apiKey: key, checkCompatibility: false });
+	}
 	return q;
 }
 
@@ -22,24 +24,27 @@ export async function save_user(
 	picture?: string,
 	email?: string,
 	password_hash?: string,
+	env?: Env,
 ): Promise<void> {
 	const u: User = { s: 'u', n: name, p: picture, m: email, h: password_hash, d: Date.now() };
 	try {
-		const r = await client().retrieve(C, { ids: [pid(id)] });
+		const c = await client(env!);
+		const r = await c.retrieve(C, { ids: [pid(id)] });
 		const cur = r[0]?.payload as Record<string, unknown> | undefined;
 		if (cur?.s === 'u') {
 			u.d = (cur.d as number) || u.d;
 			u.h = (cur.h as string) || password_hash;
 		}
-		await client().upsert(C, { points: [{ id: pid(id), payload: u as unknown as Record<string, unknown> }] });
-	} catch (e) {
+		await c.upsert(C, { points: [{ id: pid(id), payload: u as unknown as Record<string, unknown> }] });
+	} catch {
 		local.set(pid(id), u);
 	}
 }
 
-export async function get_user(_event: unknown, id: string): Promise<User | null> {
+export async function get_user(_event: unknown, id: string, env: Env): Promise<User | null> {
 	try {
-		const r = await client().retrieve(C, { ids: [pid(id)] });
+		const c = await client(env);
+		const r = await c.retrieve(C, { ids: [pid(id)] });
 		const u = r[0]?.payload as Record<string, unknown> | undefined;
 		if (u?.s === 'u') {
 			return { s: 'u', n: u.n as string, p: u.p as string | undefined, m: u.m as string | undefined, h: u.h as string | undefined, d: u.d as number };
@@ -50,9 +55,10 @@ export async function get_user(_event: unknown, id: string): Promise<User | null
 	}
 }
 
-export async function find_user_by_email(email: string): Promise<(User & { i: string }) | null> {
+export async function find_user_by_email(email: string, env: Env): Promise<(User & { i: string }) | null> {
 	try {
-		const r = await client().scroll(C, {
+		const c = await client(env);
+		const r = await c.scroll(C, {
 			filter: {
 				must: [
 					{ key: 's', match: { value: 'u' } },

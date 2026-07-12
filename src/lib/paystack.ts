@@ -1,6 +1,5 @@
-import { env } from '$env/dynamic/private';
-import { dev } from '$app/environment';
 import { createHmac } from 'node:crypto';
+import { dev } from '$app/environment';
 
 const BASE = 'https://api.paystack.co';
 
@@ -18,15 +17,15 @@ export interface PaystackVerifyResult {
 	metadata: Record<string, unknown>;
 }
 
-export function get_secret_key(): string {
-	const paystack_test = env.PAYSTACK_TEST;
+async function get_secret_key(env: Env): Promise<string> {
+	const paystack_test = await env.PAYSTACK_TEST.get();
 	const is_test = paystack_test !== undefined && paystack_test !== null
 		? paystack_test === '.'
 		: dev;
 
 	const key = is_test
-		? (env.PAYSTACK_SECRET_KEY_TEST || env.PAYSTACK_SECRET_KEY)
-		: (env.PAYSTACK_SECRET_KEY_LIVE || env.PAYSTACK_SECRET_KEY);
+		? await env.PAYSTACK_SECRET_KEY_TEST.get()
+		: await env.PAYSTACK_SECRET_KEY_LIVE.get();
 	return key || '';
 }
 
@@ -35,9 +34,10 @@ export async function paystack_init(
 	amount_kobo: number,
 	reference: string,
 	callback_url: string,
-	metadata?: Record<string, unknown>
+	metadata?: Record<string, unknown>,
+	env?: Env,
 ): Promise<PaystackInitResult> {
-	const secret_key = get_secret_key();
+	const secret_key = await get_secret_key(env!);
 	const res = await fetch(`${BASE}/transaction/initialize`, {
 		method: 'POST',
 		headers: {
@@ -66,8 +66,8 @@ export async function paystack_init(
 	return body.data as PaystackInitResult;
 }
 
-export async function paystack_verify(reference: string): Promise<PaystackVerifyResult> {
-	const secret_key = get_secret_key();
+export async function paystack_verify(reference: string, env: Env): Promise<PaystackVerifyResult> {
+	const secret_key = await get_secret_key(env);
 	const res = await fetch(
 		`${BASE}/transaction/verify/${encodeURIComponent(reference)}`,
 		{
@@ -91,8 +91,8 @@ export async function paystack_verify(reference: string): Promise<PaystackVerify
 	return body.data as PaystackVerifyResult;
 }
 
-export function verify_webhook_sig(raw_body: string, signature: string): boolean {
-	const secret_key = get_secret_key();
+export async function verify_webhook_sig(raw_body: string, signature: string, env: Env): Promise<boolean> {
+	const secret_key = await get_secret_key(env);
 	if (!secret_key) return false;
 
 	const hash = createHmac('sha512', secret_key)

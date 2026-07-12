@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { find_user_by_email } from '$lib/server/user';
 import { encode_session } from '$lib/server/session';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
   const body = await request.json().catch(() => null);
   const email = body?.email;
   const password = body?.password;
@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     return json({ error: 'Email and password required' }, { status: 400 });
   }
 
-  const existing = await find_user_by_email(email);
+  const existing = await find_user_by_email(email, platform!.env);
   if (!existing || !existing.h) {
     return json({ error: existing && !existing.h ? 'Try signing in with Google' : 'Invalid email or password' }, { status: 401 });
   }
@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     return json({ error: 'Invalid email or password' }, { status: 401 });
   }
 
-  const session = await encode_session({ id: existing.i, name: existing.n, picture: existing.p, email });
+  const session = await encode_session({ id: existing.i, name: existing.n, picture: existing.p, email }, platform!.env);
   cookies.set('session', session, { path: '/', httpOnly: true, maxAge: 604800, sameSite: 'lax' });
 
   return json({ success: true, user: { id: existing.i, email, name: existing.n, picture: existing.p } });

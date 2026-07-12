@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { paystack_init } from '$lib/paystack';
 import { new_id } from '$lib/util/new_id';
 
-export const POST: RequestHandler = async ({ request, url, locals }) => {
+export const POST: RequestHandler = async ({ request, url, locals, platform }) => {
   const user = locals.user;
   if (!user?.email) {
     return json({ error: 'Unauthorized' }, { status: 401 });
@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request, url, locals }) => {
   const callback_url = `${url.origin}/payment/callback`;
 
   try {
-    const result = await paystack_init(user.email, amount_kobo, ref, callback_url, { user_id: user.id });
+    const result = await paystack_init(user.email, amount_kobo, ref, callback_url, { user_id: user.id }, platform!.env);
     return json({
       success: true,
       authorization_url: result.authorization_url,

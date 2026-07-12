@@ -16,7 +16,17 @@
 			"invocation_logs": true
 		}
 	},
-	"vars": {
-		"QDRANT_URL": "https://a154ee19-467b-41d1-9fb8-91139b49b0a0.eu-west-2-0.aws.cloud.qdrant.io"
-	}
+	"secrets_store_secrets": [
+		{ "binding": "GEMINI", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "GEMINI" },
+		{ "binding": "EXA_API_KEY", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "EXA_API_KEY" },
+		{ "binding": "QDRANT_URL", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "QDRANT_URL" },
+		{ "binding": "QDRANT_KEY", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "QDRANT_KEY" },
+		{ "binding": "GOOGLE_ID", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "GOOGLE_ID" },
+		{ "binding": "GOOGLE_SECRET", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "GOOGLE_SECRET" },
+		{ "binding": "SECRET", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "SECRET" },
+		{ "binding": "PAYSTACK_TEST", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "PAYSTACK_TEST" },
+		{ "binding": "PAYSTACK_SECRET_KEY_TEST", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "PAYSTACK_SECRET_KEY_TEST" },
+		{ "binding": "PAYSTACK_SECRET_KEY_LIVE", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "PAYSTACK_SECRET_KEY_LIVE" },
+		{ "binding": "TOKEN_RATE", "store_id": "45748cb1c67946df943075fa14cb8815", "secret_name": "TOKEN_RATE" }
+	]
 }

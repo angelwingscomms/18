@@ -12,11 +12,11 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
   if (!ref || typeof ref !== 'string') return json({ success: false, error: 'Missing reference' }, { status: 400 });
 
   try {
-    const result = await paystack_verify(ref);
+    const result = await paystack_verify(ref, platform!.env);
     if (result.status !== 'success') return json({ success: false, error: `Transaction ${result.status}` });
 
-    await credit({ platform }, user.id, result.amount);
-    const bal = await get_balance({ platform }, user.id);
+    await credit({ platform }, user.id, result.amount, platform!.env);
+    const bal = await get_balance({ platform }, user.id, platform!.env);
     return json({ success: true, balance: bal });
   } catch (e) {
     console.error('[verify-payment]', e);

@@ -7,10 +7,10 @@ export const load: LayoutServerLoad = async ({ cookies, platform }) => {
   const session_id = cookies.get('session');
   if (!session_id) return { user: null, balance: 0 };
 
-  const s = await decode_session(session_id);
+  const s = await decode_session(session_id, platform!.env);
   if (!s) return { user: null, balance: 0 };
 
-  const balance = await get_balance({ platform }, s.user.id);
-  const u = await get_user({ platform }, s.user.id);
+  const balance = await get_balance({ platform }, s.user.id, platform!.env);
+  const u = await get_user({ platform }, s.user.id, platform!.env);
   return { user: s.user, balance, date_joined: u?.d ?? null };
 };

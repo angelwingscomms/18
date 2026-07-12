@@ -14,7 +14,8 @@ export async function GET(event: RequestEvent): Promise<Response> {
   }
   let tokens: any;
   try {
-    tokens = await google_client(event.url.origin).validateAuthorizationCode(code, stored_verifier);
+    const gc = await google_client(event.url.origin, event.platform!.env);
+    tokens = await gc.validateAuthorizationCode(code, stored_verifier);
   } catch {
     return new Response(null, { status: 400 });
   }
@@ -24,11 +25,11 @@ export async function GET(event: RequestEvent): Promise<Response> {
   if (!ures.ok) return new Response(null, { status: 400 });
   const guser = await ures.json();
   try {
-    await save_user(event, guser.sub, guser.name, guser.picture, guser.email);
+    await save_user(event, guser.sub, guser.name, guser.picture, guser.email, undefined, event.platform!.env);
   } catch {
     return new Response(null, { status: 500 });
   }
-  const session = await encode_session({ id: guser.sub, name: guser.name, picture: guser.picture, email: guser.email });
+  const session = await encode_session({ id: guser.sub, name: guser.name, picture: guser.picture, email: guser.email }, event.platform!.env);
   event.cookies.set('session', session, { path: '/', httpOnly: true, maxAge: 604800, sameSite: 'lax' });
   event.cookies.delete('oauth_state', { path: '/' });
   event.cookies.delete('oauth_verifier', { path: '/' });

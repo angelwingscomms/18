@@ -450,3 +450,17 @@ https://svelte.dev/e/a11y_role_has_required_aria_props
 11:28:50 PM [vite] (client) page reload .svelte-kit/generated/root.js
 11:28:50 PM [vite] (ssr) page reload .svelte-kit/generated/root.js
 11:28:50 PM [vite] (ssr) page reload .svelte-kit/generated/root.svelte
+12:50:27 AM [vite] (ssr) page reload src/lib/server/session.ts
+12:50:36 AM [vite] (ssr) page reload src/lib/server/token_balance.ts
+12:50:43 AM [vite] (ssr) page reload src/lib/server/user.ts
+12:50:49 AM [vite] (ssr) page reload src/lib/server/oauth.ts
+12:51:07 AM [vite] (ssr) page reload src/hooks.server.ts
+12:51:08 AM [vite] (ssr) page reload src/routes/+layout.server.ts
+12:51:15 AM [vite] (ssr) page reload src/routes/google/+server.ts
+12:51:55 AM [vite] (ssr) page reload src/routes/login/google/+server.ts
+12:54:47 AM [vite] (ssr) page reload src/lib/server/token_balance.ts
+12:54:48 AM [vite] (ssr) page reload src/lib/server/token_balance.ts
+12:54:48 AM [vite] (ssr) page reload src/lib/server/user.ts
+
+  ➜  Local:   http://localhost:1800/
+  ➜  Network: use --host to expose

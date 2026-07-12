@@ -200,3 +200,33 @@ https://svelte.dev/e/state_referenced_locally
 8:27:31 PM [vite] (ssr) page reload src/lib/components/chat/SettingsModal.svelte
 8:28:25 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/lib/components/chat/ChatPanel.svelte, /src/lib/components/chat/NotePanel.svelte, /src/lib/components/chat/BinauralModal.svelte
 8:28:25 PM [vite] (ssr) page reload src/lib/voice/voice-state.svelte.ts
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:19:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:22:16 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:22:25 This reference only captures the initial value of `binaural`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:175:1 Unused CSS selector ".settings-btn"
+https://svelte.dev/e/css_unused_selector
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:189:1 Unused CSS selector ".settings-btn:hover"
+https://svelte.dev/e/css_unused_selector
+8:38:26 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/routes/+page.svelte?svelte&type=style&lang.css
+8:38:26 PM [vite] (ssr) page reload src/routes/+page.svelte
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:19:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:22:16 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:22:25 This reference only captures the initial value of `binaural`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:175:1 Unused CSS selector ".settings-btn"
+https://svelte.dev/e/css_unused_selector
+8:38:26 PM [vite-plugin-svelte] src/routes/+page.svelte:189:1 Unused CSS selector ".settings-btn:hover"
+https://svelte.dev/e/css_unused_selector
+8:39:03 PM [vite-plugin-svelte] src/routes/+page.svelte:19:18 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:39:03 PM [vite-plugin-svelte] src/routes/+page.svelte:22:16 This reference only captures the initial value of `voice`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:39:03 PM [vite-plugin-svelte] src/routes/+page.svelte:22:25 This reference only captures the initial value of `binaural`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+8:39:03 PM [vite] (client) hmr update /src/routes/+page.svelte?svelte&type=style&lang.css
+8:39:03 PM [vite] (ssr) page reload src/routes/+page.svelte

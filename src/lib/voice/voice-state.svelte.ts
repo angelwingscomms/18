@@ -7,6 +7,30 @@ import { model_options } from './types';
 let note_id_counter = 0;
 function new_note_id() { return 'n' + (++note_id_counter); }
 
+function load_notes(): Record<string, Note> {
+	if (!browser) return {};
+	try {
+		const raw = localStorage.getItem('notes');
+		if (!raw) return {};
+		const data = JSON.parse(raw);
+		if (Array.isArray(data)) {
+			const dict: Record<string, Note> = {};
+			for (const n of data) {
+				if (!n || typeof n !== 'object') continue;
+				let id = n.i;
+				if (!id) {
+					if ('id' in n) id = (n as any).id;
+					else id = new_note_id();
+				}
+				dict[id] = { i: id, t: n.t || n.title || 'Note', b: n.b || (n as any).content || '' };
+			}
+			localStorage.setItem('notes', JSON.stringify(dict));
+			return dict;
+		}
+		return data as Record<string, Note>;
+	} catch { return {}; }
+}
+
 const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. When the conversation starts, greet the user.
 
 You have a tool called exa_search that searches the web. Only use exa_search when the user specifically asks you to search the web. Do not search on your own initiative.
@@ -72,12 +96,12 @@ export class VoiceState {
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
 	system_prompt = $state(browser && localStorage.getItem('system_prompt') || '');
-	notes = $state<Note[]>(browser ? JSON.parse(localStorage.getItem('notes') || '[]') : []);
+	notes = $state<Record<string, Note>>(load_notes());
 	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
 	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
 
 	get active_note(): Note | undefined {
-		return this.notes.find(n => n.i === this.active_note_id);
+		return this.notes[this.active_note_id];
 	}
 
 	get note_content(): string {
@@ -88,7 +112,7 @@ export class VoiceState {
 		const n = this.active_note;
 		if (n) {
 			n.b = val;
-			this.notes = [...this.notes];
+			this.notes = { ...this.notes };
 			this.qdrant_call('payload', n.i, undefined, n.b);
 		}
 	}
@@ -105,24 +129,16 @@ export class VoiceState {
 	toast_id = $state(0);
 
 	constructor() {
-		this.notes = this.notes.map(n => {
-			if (!n || typeof n !== 'object') return { i: new_note_id(), t: 'Note', b: '' };
-			if (!n.i) {
-				if ('id' in n) return { i: (n as any).id, t: (n as any).title || 'Note', b: (n as any).content || (n as any).b || '' };
-				return { i: new_note_id(), t: n.t || 'Note', b: (n as any).b || '' };
-			}
-			return n;
-		});
-		note_id_counter = Math.max(0, ...this.notes.map(n => {
-			if (!n.i) return 0;
+		note_id_counter = Math.max(0, ...Object.values(this.notes).map(n => {
 			const m = n.i.match(/^n(\d+)$/);
 			return m ? parseInt(m[1], 10) : 0;
 		}));
-		if (this.notes.length === 0) {
-			this.notes = [{ i: new_note_id(), t: 'Note', b: '' }];
+		if (Object.keys(this.notes).length === 0) {
+			const i = new_note_id();
+			this.notes = { [i]: { i, t: 'Note', b: '' } };
 		}
-		if (!this.active_note_id || !this.notes.find(n => n.i === this.active_note_id)) {
-			this.active_note_id = this.notes[0].i;
+		if (!this.active_note_id || !this.notes[this.active_note_id]) {
+			this.active_note_id = Object.values(this.notes)[0].i;
 		}
 		$effect(() => {
 			return () => { this.cleanup(); };
@@ -474,7 +490,7 @@ export class VoiceState {
 	}
 
 	note_for_id(note_id?: string): Note | undefined {
-		if (note_id) return this.notes.find(n => n.i === note_id);
+		if (note_id) return this.notes[note_id];
 		return this.active_note;
 	}
 
@@ -498,7 +514,7 @@ export class VoiceState {
 		if (!note) return 'Error: Note not found.';
 		if (oldString === '') {
 			note.b = note.b + '\n' + newString;
-			this.notes = [...this.notes];
+			this.notes = { ...this.notes };
 			this.qdrant_call('payload', note.i, undefined, note.b);
 			return 'Appended to note.';
 		}
@@ -508,7 +524,7 @@ export class VoiceState {
 				const count = content.split(oldString).length - 1;
 				if (count > 0) {
 					note.b = content.split(oldString).join(newString);
-					this.notes = [...this.notes];
+					this.notes = { ...this.notes };
 					this.qdrant_call('payload', note.i, undefined, note.b);
 					return `Replaced ${count} occurrence(s) in note.`;
 				}
@@ -518,7 +534,7 @@ export class VoiceState {
 					const last_c = content.lastIndexOf(oldString);
 					if (first !== last_c) return 'Error: Found multiple matches. Use replaceAll or provide more context.';
 					note.b = content.substring(0, first) + newString + content.substring(first + oldString.length);
-					this.notes = [...this.notes];
+					this.notes = { ...this.notes };
 					this.qdrant_call('payload', note.i, undefined, note.b);
 					return 'Edited note.';
 				}
@@ -526,30 +542,30 @@ export class VoiceState {
 			if (attempt < 8) await new Promise(r => setTimeout(r, 100));
 		}
 		note.b = note.b + '\n' + newString;
-		this.notes = [...this.notes];
+		this.notes = { ...this.notes };
 		this.qdrant_call('payload', note.i, undefined, note.b);
 		return 'Appended to note (oldString not found after 9 attempts).';
 	}
 
 	list_notes(): string {
-		return this.notes.map(n => `- ${n.i}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`).join('\n');
+		return Object.values(this.notes).map(n => `- ${n.i}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`).join('\n');
 	}
 
 	add_note(t = 'Note', b = ''): string {
 		const i = new_note_id();
-		this.notes = [...this.notes, { i, t, b }];
+		this.notes = { ...this.notes, [i]: { i, t, b } };
 		this.active_note_id = i;
 		this.qdrant_call('upsert', i, t, b);
 		return `Created note "${t}" (id: ${i}).`;
 	}
 
 	delete_note(note_id: string): string {
-		const idx = this.notes.findIndex(n => n.i === note_id);
-		if (idx === -1) return 'Error: Note not found.';
-		if (this.notes.length <= 1) return 'Error: Cannot delete the last note.';
-		this.notes = this.notes.filter(n => n.i !== note_id);
+		if (!this.notes[note_id]) return 'Error: Note not found.';
+		if (Object.keys(this.notes).length <= 1) return 'Error: Cannot delete the last note.';
+		const { [note_id]: _, ...rest } = this.notes;
+		this.notes = rest;
 		if (this.active_note_id === note_id) {
-			this.active_note_id = this.notes[0].i;
+			this.active_note_id = Object.values(this.notes)[0].i;
 		}
 		this.qdrant_call('delete', note_id);
 		return 'Deleted note.';
@@ -559,7 +575,7 @@ export class VoiceState {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
 		note.t = title;
-		this.notes = [...this.notes];
+		this.notes = { ...this.notes };
 		this.qdrant_call('payload', note.i, note.t);
 		return `Renamed note to "${title}".`;
 	}

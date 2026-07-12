@@ -12,7 +12,7 @@
 	let rename_input = $state<HTMLInputElement | null>(null);
 
 	function start_rename(note_id: string) {
-		const n = v.notes.find(x => x.i === note_id);
+		const n = v.notes[note_id];
 		if (!n) return;
 		rename_id = note_id;
 		rename_val = n.t;
@@ -31,7 +31,7 @@
 	}
 
 	function add() {
-		v.add_note('Note ' + (v.notes.length + 1));
+		v.add_note('Note ' + (Object.keys(v.notes).length + 1));
 	}
 
 	function remove(note_id: string) {
@@ -59,7 +59,7 @@
 			</div>
 			{#if v.show_note}
 				<div class="tabs-scroll">
-					{#each v.notes as note (note.i)}
+					{#each Object.values(v.notes) as note (note.i)}
 						{#if rename_id === note.i}
 							<input
 								bind:this={rename_input}
@@ -76,7 +76,7 @@
 								title={note.t}
 							>
 								<span class="tab-title">{note.t}</span>
-								{#if v.notes.length > 1}
+								{#if Object.keys(v.notes).length > 1}
 									<span class="tab-close" onclick={(e) => { e.stopPropagation(); remove(note.i); }} role="button" tabindex="-1" title="Delete note">
 										<XIcon size={10} color="#555" />
 									</span>

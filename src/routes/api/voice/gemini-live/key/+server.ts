@@ -1,4 +1,4 @@
-import { GEMINI } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { get_balance, deduct } from '$lib/server/token_balance';
@@ -14,5 +14,5 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
     }
     await deduct({ platform }, user.id, SESSION_FEE);
   }
-  return json({ k: GEMINI });
+  return json({ k: env.GEMINI });
 };

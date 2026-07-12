@@ -1,4 +1,4 @@
-import { SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 function b64(s: string): string {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -11,7 +11,7 @@ function ub64(s: string): string {
 }
 
 async function get_key(): Promise<CryptoKey> {
-  const secret = new TextEncoder().encode(SECRET).slice(0, 32);
+  const secret = new TextEncoder().encode(env.SECRET).slice(0, 32);
   return crypto.subtle.importKey('raw', secret, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
 

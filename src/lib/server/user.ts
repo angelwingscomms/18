@@ -1,5 +1,5 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { QDRANT_KEY, QDRANT_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { User } from '$lib/types/user';
 
 const C = 'i';
@@ -7,7 +7,7 @@ const local = new Map<string, User>();
 let q: QdrantClient | null = null;
 
 function client(): QdrantClient {
-	if (!q) q = new QdrantClient({ url: QDRANT_URL, apiKey: QDRANT_KEY, checkCompatibility: false });
+	if (!q) q = new QdrantClient({ url: env.QDRANT_URL, apiKey: env.QDRANT_KEY, checkCompatibility: false });
 	return q;
 }
 

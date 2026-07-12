@@ -1,9 +1,9 @@
-import { QDRANT_URL, QDRANT_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { QdrantClient } from '@qdrant/js-client-rest';
 
-const qdrant = new QdrantClient({ url: QDRANT_URL, apiKey: QDRANT_KEY });
+const qdrant = new QdrantClient({ url: env.QDRANT_URL, apiKey: env.QDRANT_KEY });
 
 export const POST: RequestHandler = async ({ request }) => {
 	const { a: action, i: id, t, b } = await request.json();

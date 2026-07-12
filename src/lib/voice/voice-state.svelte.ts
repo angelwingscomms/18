@@ -93,7 +93,6 @@ export class VoiceState {
 		}
 	}
 
-	show_settings = $state(false);
 	show_voice_menu = $state(false);
 	show_model_menu = $state(false);
 

@@ -47,6 +47,7 @@
 		"@qdrant/js-client-rest": "^1.18.0",
 		"@sapphi-red/web-noise-suppressor": "^0.3.5",
 		"arctic": "^3.7.0",
+		"bcryptjs": "^3.0.3",
 		"marked": "^18.0.5"
 	}
 }

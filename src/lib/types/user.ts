@@ -3,5 +3,6 @@ export interface User {
 	n: string
 	p?: string
 	m?: string
+	h?: string
 	d: number
 }

@@ -104,7 +104,7 @@
           {/if}
         </div>
       {:else}
-        <a href="/login/google" class="login-btn">Login</a>
+        <a href="/login" class="login-btn">Login</a>
       {/if}
     </div>
   </div>

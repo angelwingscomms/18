@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { getContext, setContext } from 'svelte';
+import { getContext, setContext, untrack } from 'svelte';
 import { get_tool_declarations } from './gemini-live-dispatcher';
 import type { ChatMsg, Note } from './types';
 import { play } from 'cuelume';
@@ -71,15 +71,15 @@ export class VoiceState {
 
 	gemini_live_healthy = false;
 	gemini_live_closing = false;
+	connecting = $state(false);
 	tool_call_pending = false;
 	goaway_received = false;
-	reconnecting = false;
+	reconnecting = $state(false);
+	prompt_reconnect_timer: ReturnType<typeof setTimeout> | null = null;
 	_user_id = '';
 
 	rnnoise_node: AudioWorkletNode | null = null;
 
-	thinking_sound: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
-	thinking_sound_buf: AudioBuffer | null = null;
 
 	chat_messages = $state<ChatMsg[]>([]);
 	chat_queue = $state<{ text: string }[]>([]);
@@ -171,6 +171,27 @@ export class VoiceState {
 			if (browser) localStorage.setItem('system_prompt', this.system_prompt);
 		});
 		$effect(() => {
+			this.system_prompt;
+			if (this.prompt_reconnect_timer) {
+				clearTimeout(this.prompt_reconnect_timer);
+				this.prompt_reconnect_timer = null;
+			}
+			if (this.gemini_live_session) {
+				this.prompt_reconnect_timer = setTimeout(() => {
+					this.prompt_reconnect_timer = null;
+					this.trigger_reconnect();
+				}, 5400);
+			}
+		});
+		$effect(() => {
+			if (this.show_binaural_settings) return;
+			if (this.prompt_reconnect_timer) {
+				clearTimeout(this.prompt_reconnect_timer);
+				this.prompt_reconnect_timer = null;
+			}
+			untrack(() => this.trigger_reconnect());
+		});
+		$effect(() => {
 			if (browser) localStorage.setItem('notes', JSON.stringify(this.notes));
 		});
 		$effect(() => {
@@ -257,8 +278,6 @@ export class VoiceState {
 		this.gemini_live_audio_queue = [];
 		this.gemini_live_audio_playing = false;
 		this.gemini_live_current_source = null;
-		this.thinking_sound_buf = null;
-		this.thinking_sound = null;
 		this.chat_loading = false;
 		play('droplet');
 		this.log('cleanup: done');
@@ -275,49 +294,13 @@ export class VoiceState {
 		}
 	}
 
-	async load_thinking_sound() {
-		if (this.thinking_sound_buf) return;
-		try {
-			const ctx = this.gemini_live_audio_ctx;
-			if (!ctx) return;
-			const res = await fetch('/sounds/thinking.wav');
-			if (!res.ok) return;
-			const array_buf = await res.arrayBuffer();
-			this.thinking_sound_buf = await ctx.decodeAudioData(array_buf);
-		} catch {}
-	}
+	async load_thinking_sound() {}
 
 	start_thinking_sound() {
-		const ctx = this.gemini_live_audio_ctx;
-		if (!ctx || this.thinking_sound || !this.thinking_sound_buf) return;
-		try {
-			const source = ctx.createBufferSource();
-			source.buffer = this.thinking_sound_buf;
-			source.loop = true;
-			const gain = ctx.createGain();
-			gain.gain.setValueAtTime(0, ctx.currentTime);
-			gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.3);
-			source.connect(gain);
-			gain.connect(ctx.destination);
-			source.start();
-			this.thinking_sound = { source, gain };
-		} catch {}
+		play('whisper');
 	}
 
-	stop_thinking_sound() {
-		if (!this.thinking_sound) return;
-		const { source, gain } = this.thinking_sound;
-		const ctx = this.gemini_live_audio_ctx;
-		if (ctx) {
-			gain.gain.cancelScheduledValues(ctx.currentTime);
-			gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
-			gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-			source.stop(ctx.currentTime + 0.6);
-		} else {
-			source.stop();
-		}
-		this.thinking_sound = null;
-	}
+	stop_thinking_sound() {}
 
 	async toggleVoiceChat() {
 		if (this.gemini_live_session) {
@@ -330,6 +313,8 @@ export class VoiceState {
 	}
 
 	async connectLive() {
+		if (this.connecting) return;
+		this.connecting = true;
 		try {
 			this.add_toast('Connecting voice...');
 			let key = this.gemini_key;
@@ -395,8 +380,10 @@ export class VoiceState {
 					onopen: () => {
 						this.gemini_live_healthy = true;
 						this.recording = true;
-						this.add_toast('Voice connected');
-						play('sparkle');
+						if (!this.reconnecting) {
+							this.add_toast('Voice connected');
+							play('sparkle');
+						}
 					},
 					onmessage: (msg: any) => { this.gemini_live_handle(msg); },
 					onerror: (e: any) => {
@@ -443,15 +430,22 @@ export class VoiceState {
 			}
 			this.cleanup();
 			throw e;
+		} finally {
+			this.connecting = false;
 		}
 	}
 
 	handle_disconnect(reason: string) {
-		if (this.gemini_live_closing || this.reconnecting) return;
+		this.trigger_reconnect();
+	}
+
+	trigger_reconnect() {
+		if (this.gemini_live_closing || this.reconnecting || this.connecting) return;
+		if (!this.gemini_live_session) return;
 		this.reconnecting = true;
 		this.gemini_live_healthy = false;
 		this.recording = false;
-		this.add_toast('Voice reconnecting...');
+		play('bloom');
 		this.auto_reconnect();
 	}
 
@@ -487,8 +481,6 @@ export class VoiceState {
 		this.gemini_live_audio_queue = [];
 		this.gemini_live_audio_playing = false;
 		this.gemini_live_current_source = null;
-		this.thinking_sound_buf = null;
-		this.thinking_sound = null;
 
 		const session = this.gemini_live_session;
 		this.gemini_live_session = null;
@@ -501,7 +493,6 @@ export class VoiceState {
 
 		try {
 			await this.connectLive();
-			this.add_toast('Voice reconnected');
 		} catch {
 			this.add_toast('Reconnect failed', 'e');
 			this.cleanup();
@@ -620,7 +611,7 @@ export class VoiceState {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
 		if (oldString === '') {
-			note.b = note.b + '\n' + newString;
+			note.b = note.b + newString;
 			this.notes = { ...this.notes };
 			this.qdrant_call('payload', note.i, undefined, note.b);
 			play('tick');
@@ -651,7 +642,7 @@ export class VoiceState {
 			}
 			if (attempt < 8) await new Promise(r => setTimeout(r, 100));
 		}
-		note.b = note.b + '\n' + newString;
+		note.b = note.b + newString;
 		this.notes = { ...this.notes };
 		this.qdrant_call('payload', note.i, undefined, note.b);
 		play('tick');
@@ -695,7 +686,6 @@ export class VoiceState {
 		if (msg.goAway) {
 			this.log('GoAway received, reason=' + (msg.goAway.reason || 'none'));
 			this.goaway_received = true;
-			this.add_toast('Voice session reconnecting...');
 		}
 		if (msg.serverContent) {
 			console.log('[voice] serverContent:', JSON.stringify({ ...msg.serverContent, modelTurn: msg.serverContent.modelTurn ? { parts: msg.serverContent.modelTurn.parts?.map((p: any) => ({ ...p, inlineData: p.inlineData ? { mimeType: p.inlineData.mimeType, data: p.inlineData.data?.slice(0, 50) + '...' } : undefined })) } : undefined }));

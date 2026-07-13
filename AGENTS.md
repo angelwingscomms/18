@@ -16,6 +16,7 @@
 - where necessary (e.g for non-trivial updates), always write failing unit and e2e tests before implementing a feature/fix and then run tests after implementing
 - fonts go in static/fonts
 - image prompts must follow docs/images/prompt-guide.md for style/theme consistency
+- sounds: always pick from https://cuelume-site.pages.dev/ (cuelume cues: chime, sparkle, droplet, bloom, whisper, tick, press, release, toggle, success); use `play('cue')` from `cuelume`
 
 ## Git Workflow
 

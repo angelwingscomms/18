@@ -58,6 +58,7 @@
 				<button
 					class="record-btn {recording ? 'recording' : ''}"
 					onclick={() => voice.toggleVoiceChat()}
+					disabled={voice.connecting || voice.reconnecting}
 					title={recording ? 'Stop' : 'Start'}
 				>
 					<MicIcon size={24} color={recording ? '#0a0a0a' : '#888'} />

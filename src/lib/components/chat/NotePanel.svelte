@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { get_voice_state } from '$lib/voice/voice-state.svelte.ts';
 	import MarkIcon from '$lib/components/icons/mark-icon.svelte';
+	import MicIcon from '$lib/components/icons/mic-icon.svelte';
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
 
@@ -55,6 +56,14 @@
 				<button class="note-toggle" onclick={() => v.show_note = !v.show_note} title="Toggle note">
 					<MarkIcon size={13} color="#888" />
 					<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
+				</button>
+				<button
+					class="dictate-btn {v.note_dictation ? 'active' : ''}"
+					onclick={() => v.note_dictation = !v.note_dictation}
+					disabled={!v.recording}
+					title={v.note_dictation ? 'Stop dictation' : 'Start dictation'}
+				>
+					<MicIcon size={13} color={v.note_dictation ? '#4ade80' : '#888'} />
 				</button>
 			</div>
 			{#if v.show_note}
@@ -273,7 +282,37 @@
 	.note-toggle-row {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.dictate-btn {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		border: 1px solid rgba(255,255,255,0.06);
+		background: rgba(255,255,255,0.02);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		transition: all 0.15s;
+		margin-left: auto;
+	}
+
+	.dictate-btn:hover:not(:disabled) {
+		border-color: rgba(255,255,255,0.12);
+		background: rgba(255,255,255,0.05);
+	}
+
+	.dictate-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.dictate-btn.active {
+		border-color: rgba(74, 222, 128, 0.35);
+		background: rgba(74, 222, 128, 0.08);
 	}
 
 </style>

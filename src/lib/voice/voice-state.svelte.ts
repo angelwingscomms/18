@@ -55,6 +55,7 @@ export class VoiceState {
 	recording = $state(false);
 	voice_muted = $state(false);
 	audio_muted = $state(false);
+	note_dictation = $state(false);
 
 	gemini_live_session: any = null;
 	gemini_live_audio_ctx: AudioContext | null = null;
@@ -300,6 +301,14 @@ export class VoiceState {
 		if (this.gemini_live_audio_gain) {
 			this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
 		}
+	}
+
+	append_input_to_note(text: string) {
+		const n = this.active_note;
+		if (!n) return;
+		n.b = n.b + (n.b ? '\n' : '') + text;
+		this.notes = { ...this.notes };
+		this.qdrant_call('payload', n.i, undefined, n.b);
 	}
 
 	async load_thinking_sound() {}
@@ -851,6 +860,7 @@ export class VoiceState {
 			const text = msg.serverContent.inputTranscription.text;
 			this.output_turn_active = false;
 			this.chat_messages = [...this.chat_messages, { role: 'user', content: text }];
+			if (this.note_dictation) this.append_input_to_note(text);
 		}
 		if (msg.serverContent?.outputTranscription?.text) {
 			const text = msg.serverContent.outputTranscription.text;

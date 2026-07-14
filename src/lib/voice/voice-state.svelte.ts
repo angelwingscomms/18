@@ -133,6 +133,14 @@ export class VoiceState {
 	toast_id = $state(0);
 
 	constructor() {
+		if (browser) {
+			document.addEventListener('keydown', (e: KeyboardEvent) => {
+				if (e.code === 'MediaPlayPause') {
+					e.preventDefault();
+					this.toggleMicMute();
+				}
+			});
+		}
 		if (Object.keys(this.notes).length === 0) {
 			const i = new_note_id();
 			this.notes = { [i]: { i, t: 'Note', b: '' } };
@@ -380,6 +388,12 @@ export class VoiceState {
 					onopen: () => {
 						this.gemini_live_healthy = true;
 						this.recording = true;
+						if ('mediaSession' in navigator) {
+							try {
+								navigator.mediaSession.setActionHandler('play', () => this.toggleMicMute());
+								navigator.mediaSession.setActionHandler('pause', () => this.toggleMicMute());
+							} catch {}
+						}
 						if (!this.reconnecting) {
 							this.add_toast('Voice connected');
 							play('sparkle');
@@ -794,6 +808,12 @@ export class VoiceState {
 						const result = this.rename_note(fc.args.title, fc.args.note_id);
 						this.send_gemini_tool_response({
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+						});
+					} else if (fc.name === 'stop_listening') {
+						this.toggleMicMute();
+						const s = this.voice_muted ? 'muted' : 'unmuted';
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result: `Microphone ${s}.` } }],
 						});
 					}
 				}

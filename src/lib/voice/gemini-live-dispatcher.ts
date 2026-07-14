@@ -156,6 +156,14 @@ export function get_tool_declarations() {
 						required: ['title'],
 					},
 				},
+				{
+					name: 'stop_listening',
+					description: 'Mute the microphone. Call this when the user asks you to stop listening or wants privacy.',
+					parameters: {
+						type: 'object',
+						properties: {},
+					},
+				},
 			],
 		},
 	];

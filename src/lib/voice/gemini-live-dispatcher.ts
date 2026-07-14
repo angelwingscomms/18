@@ -157,6 +157,19 @@ export function get_tool_declarations() {
 					},
 				},
 				{
+					name: 'focus_note',
+					description: 'Make a note the active/focused note shown in the editor. If note_id is omitted, focuses the active note.',
+					parameters: {
+						type: 'object',
+						properties: {
+							note_id: {
+								type: 'string',
+								description: 'The note id to focus (omit for active note)',
+							},
+						},
+					},
+				},
+				{
 					name: 'stop_listening',
 					description: 'Mute the microphone. Call this when the user asks you to stop listening or wants privacy.',
 					parameters: {

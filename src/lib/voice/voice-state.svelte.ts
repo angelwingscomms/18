@@ -104,6 +104,7 @@ export class VoiceState {
 	notes = $state<Record<string, Note>>(load_notes());
 	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
 	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
+	open_note_ids = $state<string[]>([]);
 
 	get active_note(): Note | undefined {
 		return this.notes[this.active_note_id];
@@ -149,6 +150,8 @@ export class VoiceState {
 		if (!this.active_note_id || !this.notes[this.active_note_id]) {
 			this.active_note_id = Object.values(this.notes)[0].i;
 		}
+		const stored_open = browser ? localStorage.getItem('open_note_ids') : null;
+		this.open_note_ids = stored_open ? stored_open.split(',').filter(Boolean) : Object.keys(this.notes);
 		$effect(() => {
 			return () => { this.cleanup(); };
 		});
@@ -210,6 +213,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('show_note', String(this.show_note));
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('open_note_ids', this.open_note_ids.join(','));
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('binaural_volume', String(this.binaural_volume));
@@ -538,6 +544,7 @@ export class VoiceState {
 			for (const qn of data.notes) {
 				if (!this.notes[qn.i]) {
 					this.notes = { ...this.notes, [qn.i]: { i: qn.i, t: qn.t, b: qn.b } };
+					if (!this.open_note_ids.includes(qn.i)) this.open_note_ids = [...this.open_note_ids, qn.i];
 					changed = true;
 				}
 			}
@@ -683,8 +690,9 @@ export class VoiceState {
 		if (Object.keys(this.notes).length <= 1) return 'Error: Cannot delete the last note.';
 		const { [note_id]: _, ...rest } = this.notes;
 		this.notes = rest;
+		this.open_note_ids = this.open_note_ids.filter(id => id !== note_id);
 		if (this.active_note_id === note_id) {
-			this.active_note_id = Object.values(this.notes)[0].i;
+			this.active_note_id = Object.values(this.notes)[0]?.i ?? '';
 		}
 		this.qdrant_call('delete', note_id);
 		return 'Deleted note.';
@@ -697,6 +705,14 @@ export class VoiceState {
 		this.notes = { ...this.notes };
 		this.qdrant_call('payload', note.i, note.t);
 		return `Renamed note to "${title}".`;
+	}
+
+	focus_note(note_id?: string): string {
+		const n = this.note_for_id(note_id);
+		if (!n) return 'Error: Note not found.';
+		this.active_note_id = n.i;
+		if (!this.open_note_ids.includes(n.i)) this.open_note_ids = [...this.open_note_ids, n.i];
+		return `Focused note "${n.t}".`;
 	}
 
 	gemini_live_handle(msg: any) {
@@ -812,7 +828,12 @@ export class VoiceState {
 						this.send_gemini_tool_response({
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
 						});
-					} else if (fc.name === 'stop_listening') {
+					} else if (fc.name === 'focus_note') {
+					const result = this.focus_note(fc.args.note_id);
+					this.send_gemini_tool_response({
+						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+					});
+				} else if (fc.name === 'stop_listening') {
 						this.toggleMicMute();
 						const s = this.voice_muted ? 'muted' : 'unmuted';
 						this.send_gemini_tool_response({

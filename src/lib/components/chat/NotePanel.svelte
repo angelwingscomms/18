@@ -3,6 +3,7 @@
 	import MarkIcon from '$lib/components/icons/mark-icon.svelte';
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
+	import FilesIcon from '$lib/components/icons/files-icon.svelte';
 
 	const v = get_voice_state();
 
@@ -10,6 +11,7 @@
 	let rename_id = $state<string | null>(null);
 	let rename_val = $state('');
 	let rename_input = $state<HTMLInputElement | null>(null);
+	let show_files = $state(false);
 
 	function start_rename(note_id: string) {
 		const n = v.notes[note_id];
@@ -38,6 +40,10 @@
 		v.delete_note(note_id);
 	}
 
+	function close(note_id: string) {
+		v.open_note_ids = v.open_note_ids.filter(id => id !== note_id);
+	}
+
 	$effect(() => {
 		const n = v.active_note;
 		if (textarea && n) {
@@ -57,10 +63,17 @@
 					<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
 				</button>
 
+				<button class="note-toggle" onclick={() => show_files = true} title="All files">
+					<FilesIcon size={13} color="#888" />
+					<span class="note-label">Files</span>
+				</button>
+
 			</div>
 			{#if v.show_note}
 				<div class="tabs-scroll">
-					{#each Object.values(v.notes) as note (note.i)}
+				{#each v.open_note_ids as id (id)}
+					{#if v.notes[id]}
+						{@const note = v.notes[id]}
 						{#if rename_id === note.i}
 							<input
 								bind:this={rename_input}
@@ -77,14 +90,13 @@
 								title={note.t}
 							>
 								<span class="tab-title">{note.t}</span>
-								{#if Object.keys(v.notes).length > 1}
-									<span class="tab-close" onclick={(e) => { e.stopPropagation(); remove(note.i); }} role="button" tabindex="-1" title="Delete note">
-										<XIcon size={10} color="#555" />
-									</span>
-								{/if}
+								<span class="tab-close" onclick={(e) => { e.stopPropagation(); close(note.i); }} role="button" tabindex="-1" title="Close (keep note)">
+									<XIcon size={10} color="#555" />
+								</span>
 							</button>
 						{/if}
-					{/each}
+					{/if}
+				{/each}
 					<button class="tab-add" onclick={add} title="Add note">
 						<PlusIcon size={12} color="#888" />
 					</button>
@@ -102,6 +114,31 @@
 		></textarea>
 	{/if}
 </div>
+
+{#if show_files}
+	<div class="overlay" role="presentation" onclick={() => show_files = false}>
+		<div class="files-modal" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.key === 'Escape' && (show_files = false)}>
+			<div class="modal-header">
+				<span class="modal-label">All files</span>
+				<span class="tab-close" onclick={() => show_files = false} role="button" tabindex="-1" title="Close">
+					<XIcon size={12} color="#888" />
+				</span>
+			</div>
+		<div class="files-list">
+			{#each Object.values(v.notes) as note (note.i)}
+				<div class="file-row {note.i === v.active_note_id ? 'active' : ''}">
+					<button class="file-name" onclick={() => { v.active_note_id = note.i; if (!v.open_note_ids.includes(note.i)) v.open_note_ids = [...v.open_note_ids, note.i]; show_files = false; }} title={note.t}>
+						{note.t}
+					</button>
+					<button class="file-del" onclick={() => remove(note.i)} title="Delete note">
+						<XIcon size={11} color="#888" />
+					</button>
+				</div>
+			{/each}
+		</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.note-panel {
@@ -277,5 +314,94 @@
 		gap: 0.5rem;
 	}
 
+	.overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0,0,0,0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 100;
+	}
+
+	.files-modal {
+		background: #161616;
+		border: 1px solid rgba(255,255,255,0.08);
+		border-radius: 12px;
+		width: 360px;
+		max-width: 90vw;
+		max-height: 70vh;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.modal-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid rgba(255,255,255,0.06);
+	}
+
+	.modal-label {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #ccc;
+	}
+
+	.files-list {
+		overflow-y: auto;
+		padding: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.file-row {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		border-radius: 8px;
+		padding: 0.125rem 0.25rem;
+	}
+
+	.file-row.active {
+		background: rgba(74, 158, 255, 0.08);
+	}
+
+	.file-name {
+		flex: 1;
+		text-align: left;
+		background: none;
+		border: none;
+		color: #ccc;
+		cursor: pointer;
+		font-size: 0.8125rem;
+		padding: 0.375rem 0.5rem;
+		border-radius: 6px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.file-name:hover {
+		background: rgba(255,255,255,0.05);
+		color: #fff;
+	}
+
+	.file-del {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 4px;
+		border-radius: 4px;
+		display: flex;
+		flex-shrink: 0;
+	}
+
+	.file-del:hover {
+		background: rgba(255,255,255,0.08);
+	}
 
 </style>

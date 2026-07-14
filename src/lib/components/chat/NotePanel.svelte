@@ -2,6 +2,8 @@
 	import { get_voice_state } from '$lib/voice/voice-state.svelte.ts';
 	import MarkIcon from '$lib/components/icons/mark-icon.svelte';
 	import MicIcon from '$lib/components/icons/mic-icon.svelte';
+
+
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
 
@@ -57,14 +59,21 @@
 					<MarkIcon size={13} color="#888" />
 					<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
 				</button>
+
 				<button
 					class="dictate-btn {v.note_dictating ? 'active' : ''}"
-					onclick={() => v.note_dictating ? v.stopNoteDictation() : v.startNoteDictation()}
-					disabled={!v.recording}
-					title={v.note_dictating ? 'Stop dictation' : 'Start dictation'}
+					onclick={() => {
+						if (!textarea) return;
+						v.note_dictation_cursor = textarea.selectionStart ?? v.note_content.length;
+						if (v.note_dictating) v.stopNoteDictation();
+						else v.startNoteDictation();
+					}}
+					title="Dictate into note"
 				>
-					<MicIcon size={13} color={v.note_dictating ? '#4ade80' : '#888'} />
+					<MicIcon size={13} color={v.note_dictating ? '#4a9eff' : '#888'} />
+					<span class="note-label">{v.note_dictating ? 'Stop' : 'Dictate'}</span>
 				</button>
+
 			</div>
 			{#if v.show_note}
 				<div class="tabs-scroll">
@@ -286,33 +295,36 @@
 	}
 
 	.dictate-btn {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		border: 1px solid rgba(255,255,255,0.06);
-		background: rgba(255,255,255,0.02);
-		cursor: pointer;
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
+		gap: 0.375rem;
+		background: none;
+		border: 1px solid rgba(255,255,255,0.06);
+		border-radius: 8px;
+		color: #888;
+		cursor: pointer;
+		padding: 0.25rem 0.5rem;
+		font-size: 0.8125rem;
+		width: fit-content;
 		transition: all 0.15s;
-		margin-left: auto;
 	}
 
-	.dictate-btn:hover:not(:disabled) {
-		border-color: rgba(255,255,255,0.12);
-		background: rgba(255,255,255,0.05);
-	}
-
-	.dictate-btn:disabled {
-		opacity: 0.3;
-		cursor: not-allowed;
+	.dictate-btn:hover {
+		color: #ccc;
+		border-color: rgba(255,255,255,0.1);
 	}
 
 	.dictate-btn.active {
-		border-color: rgba(74, 222, 128, 0.35);
-		background: rgba(74, 222, 128, 0.08);
+		color: #4a9eff;
+		border-color: rgba(74, 158, 255, 0.3);
+		background: rgba(74, 158, 255, 0.08);
+		animation: dictate-pulse 1.4s ease-in-out infinite;
 	}
+
+	@keyframes dictate-pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.55; }
+	}
+
 
 </style>

@@ -2176,6 +2176,8 @@
         "npm:@types/node@24",
         "npm:@vitest/browser-playwright@^4.1.8",
         "npm:arctic@^3.7.0",
+        "npm:bcryptjs@^3.0.3",
+        "npm:cuelume@0.1",
         "npm:eslint-config-prettier@^10.1.8",
         "npm:eslint-plugin-svelte@^3.19.0",
         "npm:eslint@^10.4.1",

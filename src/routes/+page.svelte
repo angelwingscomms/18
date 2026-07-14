@@ -9,7 +9,7 @@
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import ChatPanel from '$lib/components/chat/ChatPanel.svelte';
 	import NotePanel from '$lib/components/chat/NotePanel.svelte';
-	import BinauralModal from '$lib/components/chat/BinauralModal.svelte';
+	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 	import BinauralIcon from '$lib/components/icons/binaural-icon.svelte';
 	import { BinauralBeat } from '$lib/voice/binaural-beat.svelte.ts';
 
@@ -33,19 +33,6 @@
 	let voice_muted = $derived(voice?.voice_muted ?? false);
 	let audio_muted = $derived(voice?.audio_muted ?? false);
 	let toasts = $derived(voice?.toasts ?? []);
-	let confirming_clear = $state(false);
-
-	function handle_clear() {
-		if (!voice) return;
-		if (voice.chat_messages.length === 0) return;
-		if (confirming_clear) {
-			voice.clearChat();
-			confirming_clear = false;
-		} else {
-			confirming_clear = true;
-			setTimeout(() => confirming_clear = false, 3000);
-		}
-	}
 </script>
 
 {#if voice}
@@ -68,7 +55,6 @@
 					<button
 						class="control-dot {voice_muted ? 'muted' : ''}"
 						onclick={() => voice.toggleMicMute()}
-						disabled={!recording}
 						title={voice_muted ? 'Unmute mic' : 'Mute mic'}
 					>
 						{#if voice_muted}
@@ -81,7 +67,6 @@
 					<button
 						class="control-dot {audio_muted ? 'muted' : ''}"
 						onclick={() => voice.toggleSpeakerMute()}
-						disabled={!recording}
 						title={audio_muted ? 'Unmute speaker' : 'Mute speaker'}
 					>
 						{#if audio_muted}
@@ -92,12 +77,8 @@
 					</button>
 
 					{#if recording}
-						<button class="control-dot {confirming_clear ? 'confirm' : ''}" onclick={handle_clear} title={confirming_clear ? 'Click again to confirm' : 'Clear'}>
-							{#if confirming_clear}
-								<span class="confirm-text">?</span>
-							{:else}
-								<XIcon size={14} color="#666" />
-							{/if}
+						<button class="control-dot" onclick={() => voice?.clearChat()} title="Clear">
+							<XIcon size={14} color="#666" />
 						</button>
 					{/if}
 
@@ -131,7 +112,7 @@
 		</main>
 	</div>
 
-	<BinauralModal />
+	<SettingsModal />
 
 	{#if toasts.length > 0}
 		<div class="toast-container">
@@ -260,11 +241,6 @@
 		background: rgba(255, 68, 68, 0.1);
 	}
 
-	.control-dot.confirm {
-		border-color: rgba(255, 200, 50, 0.6);
-		background: rgba(255, 200, 50, 0.12);
-	}
-
 	.control-dot.active {
 		border-color: rgba(74, 158, 255, 0.5);
 		background: rgba(74, 158, 255, 0.12);
@@ -274,12 +250,6 @@
 		width: 1px;
 		height: 20px;
 		background: rgba(255,255,255,0.06);
-	}
-
-	.confirm-text {
-		color: #ffc832;
-		font-size: 14px;
-		font-weight: 700;
 	}
 
 	.main {

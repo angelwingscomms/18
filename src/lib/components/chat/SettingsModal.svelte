@@ -145,7 +145,7 @@
           <input
             type="password"
             class="key-input"
-            placeholder="Groq API key"
+            placeholder="Groq API key (for dictation)"
             bind:value={v.groq_key}
           />
           <span class="key-desc">Saved locally. Override server keys and note embeddings.</span>

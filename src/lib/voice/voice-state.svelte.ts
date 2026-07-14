@@ -311,6 +311,26 @@ export class VoiceState {
 		}
 	}
 
+	start_listening(): string {
+		this.voice_muted = false;
+		if (this.gemini_live_audio_gain) {
+			this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
+		}
+		return this.gemini_live_session
+			? 'Microphone is on.'
+			: 'Microphone on — connect voice chat to talk.';
+	}
+
+	change_voice(voice_name?: string): string {
+		if (!voice_name) return 'Error: voice_name is required.';
+		this.voice_name = voice_name;
+		if (this.gemini_live_session) {
+			this.trigger_reconnect();
+			return `Changed voice to "${voice_name}" and restarting the live session to apply it.`;
+		}
+		return `Changed voice to "${voice_name}".`;
+	}
+
 	async load_thinking_sound() {}
 
 	start_thinking_sound() {
@@ -830,6 +850,16 @@ export class VoiceState {
 						});
 					} else if (fc.name === 'focus_note') {
 					const result = this.focus_note(fc.args.note_id);
+					this.send_gemini_tool_response({
+						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+					});
+				} else if (fc.name === 'start_listening') {
+					const result = this.start_listening();
+					this.send_gemini_tool_response({
+						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+					});
+				} else if (fc.name === 'change_voice') {
+					const result = await this.change_voice(fc.args.voice_name);
 					this.send_gemini_tool_response({
 						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
 					});

@@ -170,6 +170,28 @@ export function get_tool_declarations() {
 					},
 				},
 				{
+					name: 'start_listening',
+					description: 'Turn the microphone on / unmute it so the user can speak to you.',
+					parameters: {
+						type: 'object',
+						properties: {},
+					},
+				},
+				{
+					name: 'change_voice',
+					description: 'Change the voice Gemini speaks with. The live session will be restarted to apply the new voice.',
+					parameters: {
+						type: 'object',
+						properties: {
+							voice_name: {
+								type: 'string',
+								description: 'The voice name to use (e.g. Kore, Charon, Puck, Aoede).',
+							},
+						},
+						required: ['voice_name'],
+					},
+				},
+				{
 					name: 'stop_listening',
 					description: 'Mute the microphone. Call this when the user asks you to stop listening or wants privacy.',
 					parameters: {

@@ -142,6 +142,12 @@
             placeholder="OpenRouter API key"
             bind:value={v.openrouter_key}
           />
+          <input
+            type="password"
+            class="key-input"
+            placeholder="Groq API key"
+            bind:value={v.groq_key}
+          />
           <span class="key-desc">Saved locally. Override server keys and note embeddings.</span>
         </div>
 

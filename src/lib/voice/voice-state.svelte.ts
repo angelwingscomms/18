@@ -55,7 +55,9 @@ export class VoiceState {
 	recording = $state(false);
 	voice_muted = $state(false);
 	audio_muted = $state(false);
-	note_dictation = $state(false);
+	note_dictating = $state(false);
+	note_dictation_media_recorder: MediaRecorder | null = null;
+	note_dictation_chunks: Blob[] = [];
 
 	gemini_live_session: any = null;
 	gemini_live_audio_ctx: AudioContext | null = null;
@@ -100,6 +102,7 @@ export class VoiceState {
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
 	openrouter_key = $state(browser && localStorage.getItem('openrouter_key') || '');
+	groq_key = $state(browser && localStorage.getItem('groq_key') || '');
 	system_prompt = $state(browser && localStorage.getItem('system_prompt') || '');
 	notes = $state<Record<string, Note>>(load_notes());
 	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
@@ -175,6 +178,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('openrouter_key', this.openrouter_key);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('groq_key', this.groq_key);
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('system_prompt', this.system_prompt);
@@ -303,12 +309,44 @@ export class VoiceState {
 		}
 	}
 
-	append_input_to_note(text: string) {
+	startNoteDictation() {
+		if (this.note_dictating || !this.gemini_live_mic_stream) return;
+		this.note_dictation_chunks = [];
+		const mr = new MediaRecorder(this.gemini_live_mic_stream, { mimeType: 'audio/webm' });
+		mr.ondataavailable = (e) => {
+			if (e.data.size > 0) this.note_dictation_chunks.push(e.data);
+		};
+		mr.onstop = () => {
+			this.note_dictating = false;
+			const blob = new Blob(this.note_dictation_chunks, { type: 'audio/webm' });
+			this.transcribe_and_append(blob);
+		};
+		this.note_dictation_media_recorder = mr;
+		mr.start();
+		this.note_dictating = true;
+	}
+
+	stopNoteDictation() {
+		if (!this.note_dictation_media_recorder) return;
+		this.note_dictation_media_recorder.stop();
+		this.note_dictation_media_recorder = null;
+	}
+
+	async transcribe_and_append(blob: Blob) {
 		const n = this.active_note;
 		if (!n) return;
-		n.b = n.b + (n.b ? '\n' : '') + text;
-		this.notes = { ...this.notes };
-		this.qdrant_call('payload', n.i, undefined, n.b);
+		const form = new FormData();
+		form.set('audio', blob, 'dictation.webm');
+		if (this.groq_key) form.set('apiKey', this.groq_key);
+		try {
+			const res = await fetch('/api/voice/groq-transcribe', { method: 'POST', body: form });
+			const d: any = await res.json();
+			if (d.text) {
+				n.b = n.b + (n.b ? '\n' : '') + d.text;
+				this.notes = { ...this.notes };
+				this.qdrant_call('payload', n.i, undefined, n.b);
+			}
+		} catch {}
 	}
 
 	async load_thinking_sound() {}
@@ -860,7 +898,6 @@ export class VoiceState {
 			const text = msg.serverContent.inputTranscription.text;
 			this.output_turn_active = false;
 			this.chat_messages = [...this.chat_messages, { role: 'user', content: text }];
-			if (this.note_dictation) this.append_input_to_note(text);
 		}
 		if (msg.serverContent?.outputTranscription?.text) {
 			const text = msg.serverContent.outputTranscription.text;

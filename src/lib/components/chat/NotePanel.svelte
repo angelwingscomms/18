@@ -58,12 +58,12 @@
 					<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
 				</button>
 				<button
-					class="dictate-btn {v.note_dictation ? 'active' : ''}"
-					onclick={() => v.note_dictation = !v.note_dictation}
+					class="dictate-btn {v.note_dictating ? 'active' : ''}"
+					onclick={() => v.note_dictating ? v.stopNoteDictation() : v.startNoteDictation()}
 					disabled={!v.recording}
-					title={v.note_dictation ? 'Stop dictation' : 'Start dictation'}
+					title={v.note_dictating ? 'Stop dictation' : 'Start dictation'}
 				>
-					<MicIcon size={13} color={v.note_dictation ? '#4ade80' : '#888'} />
+					<MicIcon size={13} color={v.note_dictating ? '#4ade80' : '#888'} />
 				</button>
 			</div>
 			{#if v.show_note}

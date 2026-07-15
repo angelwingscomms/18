@@ -11,7 +11,7 @@
 	let text_lines = $state<string[]>(content.split('\n'));
 	let collapsed = new SvelteSet<number>();
 	let last_emitted = content;
-	let inputs: (HTMLInputElement | null)[] = [];
+	let inputs = $state<(HTMLInputElement | null)[]>([]);
 
 	let visible = $derived(visible_indices(text_lines, collapsed));
 	let levels = $derived(text_lines.map(indent_level));

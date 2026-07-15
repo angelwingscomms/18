@@ -2,11 +2,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { indent_level, has_children, visible_indices } from '$lib/voice/fold';
 
-	let {
-		content,
-		use_tab = false,
-		onchange
-	}: { content: string; use_tab?: boolean; onchange: (t: string) => void } = $props();
+	let { content, onchange }: { content: string; onchange: (t: string) => void } = $props();
 
 	let text_lines = $state<string[]>(content.split('\n'));
 	let collapsed = new SvelteSet<number>();
@@ -55,9 +51,17 @@
 		const en = inp.selectionEnd ?? 0;
 
 		if (e.key === 'Tab') {
-			if (!use_tab) return;
 			e.preventDefault();
 			const v = inp.value;
+			if (e.shiftKey) {
+				if (v.startsWith('\t')) {
+					update_line(i, v.slice(1));
+					requestAnimationFrame(() => {
+						inp.selectionStart = inp.selectionEnd = Math.max(0, s - 1);
+					});
+				}
+				return;
+			}
 			update_line(i, v.slice(0, s) + '\t' + v.slice(en));
 			requestAnimationFrame(() => {
 				inp.selectionStart = inp.selectionEnd = s + 1;

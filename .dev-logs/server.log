@@ -94,3 +94,61 @@ https://svelte.dev/e/state_referenced_locally
 https://svelte.dev/e/state_referenced_locally
 10:00:44 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:13:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
 https://svelte.dev/e/state_referenced_locally
+10:01:19 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:11:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:01:19 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:13:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:02 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:10:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:02 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:02 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:05:02 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:05:02 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:10:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:02 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:08 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:10:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:08 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:08 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:05:08 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:05:08 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:10:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:05:08 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:06:33 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:116:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:33 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:170:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+10:06:33 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:179:4 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:33 AM [vite] (client) hmr update /src/lib/components/chat/NotePanel.svelte
+10:06:33 AM [vite] (ssr) page reload src/lib/components/chat/NotePanel.svelte
+10:06:33 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:116:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:33 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:170:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+10:06:33 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:179:4 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:44 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:06:44 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:06:44 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:06:44 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:116:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:167:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:176:4 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:45 AM [vite] (client) hmr update /src/lib/components/chat/NotePanel.svelte
+10:06:45 AM [vite] (ssr) page reload src/lib/components/chat/NotePanel.svelte
+10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:116:9 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:167:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:176:4 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events

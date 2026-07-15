@@ -58,6 +58,7 @@ export function get_voice_state(): VoiceState {
 export class VoiceState {
 	recording = $state(false);
 	voice_muted = $state(false);
+	silent_mode = $state(false);
 	audio_muted = $state(false);
 	note_dictating = $state(false);
 	note_dictation_media_recorder: MediaRecorder | null = null;
@@ -345,6 +346,8 @@ export class VoiceState {
 
 	start_listening(): string {
 		this.voice_muted = false;
+		this.silent_mode = false;
+		this.interrupt_audio();
 		if (this.gemini_live_audio_gain) {
 			this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
 		}
@@ -1044,15 +1047,15 @@ export class VoiceState {
 						this.send_gemini_tool_response({
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
 						});
-					} else if (fc.name === 'stop_listening') {
-						this.toggleMicMute();
-						const s = this.voice_muted ? 'muted' : 'unmuted';
-						this.send_gemini_tool_response({
-							functionResponses: [
-								{ id: fc.id, name: fc.name, response: { result: `Microphone ${s}.` } }
-							]
-						});
-					}
+				} else if (fc.name === 'stop_listening') {
+					this.silent_mode = true;
+					this.interrupt_audio();
+					this.send_gemini_tool_response({
+						functionResponses: [
+							{ id: fc.id, name: fc.name, response: { result: 'Listening silently — responses discarded until you call start_listening.' } }
+						]
+					});
+				}
 				}
 				this.stop_thinking_sound();
 			})();
@@ -1063,6 +1066,7 @@ export class VoiceState {
 			for (const part of msg.serverContent.modelTurn.parts) {
 				if (part.inlineData?.mimeType?.startsWith('audio/')) {
 					audio_count++;
+					if (this.silent_mode) continue;
 					try {
 						const binary = atob(part.inlineData.data);
 						const bytes = new Uint8Array(binary.length);
@@ -1091,11 +1095,13 @@ export class VoiceState {
 		}
 		if (msg.serverContent?.inputTranscription?.text) {
 			this.pending_clear = false;
+			if (this.silent_mode) return;
 			const text = msg.serverContent.inputTranscription.text;
 			this.output_turn_active = false;
 			this.chat_messages = [...this.chat_messages, { role: 'user', content: text }];
 		}
 		if (msg.serverContent?.outputTranscription?.text) {
+			if (this.silent_mode) return;
 			const text = msg.serverContent.outputTranscription.text;
 			if (!this.output_turn_active) {
 				this.output_turn_active = true;
@@ -1108,6 +1114,7 @@ export class VoiceState {
 			}
 		}
 		if (msg.serverContent?.turnComplete) {
+			if (this.silent_mode) return;
 			this.output_turn_active = false;
 		}
 	}

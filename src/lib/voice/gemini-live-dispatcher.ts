@@ -193,7 +193,7 @@ export function get_tool_declarations() {
 				},
 				{
 					name: 'stop_listening',
-					description: 'Mute the microphone. Call this when the user asks you to stop listening or wants privacy.',
+					description: 'Keep listening but silently discard all responses (audio and chat) until you call start_listening. Call this when the user asks you to stop listening or wants privacy — you still hear them and may call start_listening to unmute.',
 					parameters: {
 						type: 'object',
 						properties: {},

@@ -152,3 +152,35 @@ https://svelte.dev/e/a11y_click_events_have_key_events
 https://svelte.dev/e/a11y_interactive_supports_focus
 10:06:45 AM [vite-plugin-svelte] src/lib/components/chat/NotePanel.svelte:176:4 Visible, non-interactive element `<span>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
 https://svelte.dev/e/a11y_click_events_have_key_events
+10:12:28 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:28 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:28 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:12:28 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:12:28 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:28 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:30 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:30 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:30 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:12:30 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:12:30 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:30 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:45 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:45 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:45 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte?svelte&type=style&lang.css
+10:12:45 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:12:57 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:7:35 This reference only captures the initial value of `content`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:57 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:9:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:12:57 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte?svelte&type=style&lang.css
+10:12:57 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte

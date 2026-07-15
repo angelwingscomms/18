@@ -10,7 +10,6 @@
 	let inputs = $state<(HTMLInputElement | null)[]>([]);
 
 	let visible = $derived(visible_indices(text_lines, collapsed));
-	let levels = $derived(text_lines.map(indent_level));
 	let kids = $derived(has_children(text_lines));
 
 	$effect(() => {
@@ -158,7 +157,7 @@
 
 <div class="editor">
 	{#each visible as i (i)}
-		<div class="row" style="padding-left:{levels[i] * 1.2}rem">
+		<div class="row">
 			{#if kids[i]}
 				<button class="fold" onclick={() => toggle(i)} aria-label="toggle fold"
 					>{collapsed.has(i) ? '▸' : '▾'}</button
@@ -194,6 +193,7 @@
 		line-height: 1.6;
 		padding: 0.4rem 0;
 		border-radius: 0 0 12px 12px;
+		tab-size: 2;
 	}
 
 	.editor:focus-within {
@@ -238,5 +238,6 @@
 		line-height: inherit;
 		padding: 0;
 		outline: none;
+		tab-size: 2;
 	}
 </style>

@@ -61,6 +61,7 @@ export class VoiceState {
 	recording = $state(false);
 	voice_muted = $state(false);
 	silent_mode = $state(false);
+	pending_silent = false;
 	audio_muted = $state(false);
 	note_dictating = $state(false);
 	note_dictation_media_recorder: MediaRecorder | null = null;
@@ -361,6 +362,7 @@ export class VoiceState {
 	start_listening(): string {
 		this.voice_muted = false;
 		this.silent_mode = false;
+		this.pending_silent = false;
 		this.interrupt_audio();
 		if (this.gemini_live_audio_gain) {
 			this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
@@ -909,8 +911,11 @@ export class VoiceState {
 		}
 		if (msg.toolCall?.functionCalls?.length) {
 			this.tool_call_pending = true;
-			this.interrupt_audio();
-			this.start_thinking_sound();
+			const has_stop = msg.toolCall.functionCalls.some((c) => c.name === 'stop_listening');
+			if (!has_stop) {
+				this.interrupt_audio();
+				this.start_thinking_sound();
+			}
 			(async () => {
 				for (const fc of msg.toolCall.functionCalls) {
 					if (this.silent_mode && fc.name !== 'start_listening') {
@@ -1070,11 +1075,7 @@ export class VoiceState {
 							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
 						});
 				} else if (fc.name === 'stop_listening') {
-					this.silent_mode = true;
-					this.interrupt_audio();
-					try {
-						this.gemini_live_session?.sendRealtimeInput({ text: 'silent mode on' });
-					} catch {}
+					this.pending_silent = true;
 					this.send_gemini_tool_response({
 						functionResponses: [
 							{ id: fc.id, name: fc.name, response: { result: 'Listening silently — responses discarded until you call start_listening.' } }
@@ -1139,6 +1140,13 @@ export class VoiceState {
 			}
 		}
 		if (msg.serverContent?.turnComplete) {
+			if (this.pending_silent) {
+				this.pending_silent = false;
+				this.silent_mode = true;
+				try {
+					this.gemini_live_session?.sendRealtimeInput({ text: 'silent mode on' });
+				} catch {}
+			}
 			if (this.silent_mode) return;
 			this.output_turn_active = false;
 		}

@@ -46,7 +46,7 @@ You also have note tools for working with the user's notes. read_note to read a 
 
 The user can send you images. When you receive an image, acknowledge and describe what you see if asked.
 
-There is a "silent mode". When it is active the microphone is effectively muted and you were not meant to hear the user — any message that begins with "silent mode on" means silent mode is currently active. While silent mode is on: ignore the user's message entirely and do NOT respond at all (no speech, no text, no tool calls). The ONLY exception is if the user asks you to start listening, unmute, or stop being silent — in that case you MUST call the start_listening tool. start_listening is the only tool you may ever call while silent mode is on.`;
+There is a "silent mode". When it is active the microphone is effectively muted and you were not meant to hear the user — any message that begins with "silent mode on" means silent mode is currently active. While silent mode is on: ignore the user's message entirely and do NOT respond at all (no speech, no text, no tool calls). The ONLY exception is if the user wants to talk to you — this includes saying or implying things like "start listening", "resume chat", "unmute", "stop being silent", calling your name (e.g. "Gemini", "hey Gemini"), or otherwise addressing you directly. In any of those cases you MUST call the start_listening tool to unmute. start_listening is the only tool you may ever call while silent mode is on.`;
 const KEY = Symbol('voice');
 
 export function set_voice_state(state: VoiceState) {

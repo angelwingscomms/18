@@ -8,19 +8,28 @@
 		onchange
 	}: { content: string; tab_size?: number; onchange: (t: string) => void } = $props();
 
-	let text_lines = $state<string[]>(content.split('\n'));
+	let editor_el = $state<HTMLDivElement | null>(null);
+	let text_lines: string[] = content.split('\n');
 	let collapsed = new SvelteSet<number>();
 	let last_emitted = content;
-	let inputs = $state<(HTMLInputElement | null)[]>([]);
+	let struct_version = $state(0);
+	let pending_caret: { i: number; offset: number } | null = null;
 
-	let visible = $derived(visible_indices(text_lines, collapsed));
-	let kids = $derived(has_children(text_lines));
+	let visible = $derived.by(() => {
+		void struct_version;
+		return visible_indices(text_lines, collapsed);
+	});
+	let kids = $derived.by(() => {
+		void struct_version;
+		return has_children(text_lines);
+	});
 
 	$effect(() => {
 		if (content !== last_emitted) {
 			text_lines = content.split('\n');
 			collapsed.clear();
 			last_emitted = content;
+			struct_version++;
 		}
 	});
 
@@ -30,186 +39,244 @@
 		onchange(t);
 	}
 
-	function update_line(i: number, val: string) {
-		text_lines = text_lines.map((l, idx) => (idx === i ? val : l));
-		emit();
-	}
-
 	function toggle(i: number) {
 		if (collapsed.has(i)) collapsed.delete(i);
 		else collapsed.add(i);
 	}
 
-	function focus_line(i: number, col: number) {
-		const el = inputs[i];
-		if (!el) return;
-		el.focus();
-		const pos = Math.min(col, el.value.length);
-		el.selectionStart = el.selectionEnd = pos;
+	function render_lines() {
+		if (!editor_el) return;
+		// eslint-disable-next-line svelte/no-dom-manipulating
+		editor_el.textContent = '';
+		for (const i of visible) {
+			const d = document.createElement('div');
+			d.className = 'line';
+			d.dataset.i = String(i);
+			d.textContent = text_lines[i] ?? '';
+			// eslint-disable-next-line svelte/no-dom-manipulating
+			editor_el.appendChild(d);
+		}
 	}
 
-	function on_key(e: KeyboardEvent, i: number) {
-		const inp = e.currentTarget as HTMLInputElement;
-		const s = inp.selectionStart ?? 0;
-		const en = inp.selectionEnd ?? 0;
+	$effect(() => {
+		void visible;
+		void editor_el;
+		render_lines();
+		if (pending_caret) {
+			const pc = pending_caret;
+			pending_caret = null;
+			requestAnimationFrame(() => {
+				const d = editor_el?.querySelector(`.line[data-i="${pc.i}"]`) as HTMLElement | null;
+				if (d) set_caret(d, pc.offset);
+			});
+		}
+	});
 
+	function line_el_from(node: Node | null): HTMLElement | null {
+		let n: Node | null = node;
+		while (n && n !== editor_el) {
+			if (n instanceof HTMLElement && n.classList.contains('line')) return n;
+			n = n.parentNode;
+		}
+		return null;
+	}
+
+	function sel_info(): { line: HTMLElement; idx: number; offset: number } | null {
+		const sel = window.getSelection();
+		if (!sel || sel.rangeCount === 0) return null;
+		const range = sel.getRangeAt(0);
+		const line = line_el_from(range.startContainer);
+		if (!line) return null;
+		const idx = parseInt(line.dataset.i ?? '-1', 10);
+		if (Number.isNaN(idx)) return null;
+		let offset: number;
+		if (range.startContainer === line) {
+			offset = 0;
+			for (let c = 0; c < range.startOffset; c++) {
+				offset += line.childNodes[c]?.textContent?.length ?? 0;
+			}
+		} else {
+			offset = range.startOffset;
+		}
+		return { line, idx, offset };
+	}
+
+	function set_caret(line: HTMLElement, offset: number) {
+		const sel = window.getSelection();
+		if (!sel) return;
+		const range = document.createRange();
+		const text_node = line.firstChild;
+		if (text_node && text_node.nodeType === Node.TEXT_NODE) {
+			const len = (text_node.textContent ?? '').length;
+			range.setStart(text_node, Math.min(offset, len));
+		} else {
+			range.setStart(line, 0);
+		}
+		range.collapse(true);
+		sel.removeAllRanges();
+		sel.addRange(range);
+	}
+
+	function on_input() {
+		if (!editor_el) return;
+		const divs = editor_el.querySelectorAll('.line');
+		const arr: string[] = [];
+		divs.forEach((d) => arr.push((d as HTMLElement).textContent ?? ''));
+		text_lines = arr;
+		emit();
+	}
+
+	function on_key(e: KeyboardEvent) {
 		if (e.key === 'Tab') {
 			e.preventDefault();
-			const v = inp.value;
+			const info = sel_info();
+			if (!info) return;
+			const { line, idx, offset } = info;
+			const cur = line.textContent ?? '';
 			if (e.shiftKey) {
-				if (v.startsWith('\t')) {
-					update_line(i, v.slice(1));
-					requestAnimationFrame(() => {
-						inp.selectionStart = inp.selectionEnd = Math.max(0, s - 1);
-					});
+				if (cur.startsWith('\t')) {
+					const nl = [...text_lines];
+					nl[idx] = cur.slice(1);
+					text_lines = nl;
+					pending_caret = { i: idx, offset: Math.max(0, offset - 1) };
+					struct_version++;
+					emit();
 				}
 				return;
 			}
-			update_line(i, v.slice(0, s) + '\t' + v.slice(en));
-			requestAnimationFrame(() => {
-				inp.selectionStart = inp.selectionEnd = s + 1;
-			});
+			const nl = [...text_lines];
+			nl[idx] = '\t' + cur;
+			text_lines = nl;
+			pending_caret = { i: idx, offset: offset + 1 };
+			struct_version++;
+			emit();
 			return;
 		}
 		if (e.key === 'Enter') {
 			e.preventDefault();
-			const v = inp.value;
-			const before = v.slice(0, s);
-			const after = v.slice(en);
-			const indent = '\t'.repeat(indent_level(v));
+			const info = sel_info();
+			if (!info) return;
+			const { idx, offset } = info;
+			const cur = text_lines[idx] ?? '';
+			const before = cur.slice(0, offset);
+			const after = cur.slice(offset);
+			const indent = '\t'.repeat(indent_level(cur));
 			const nl = [...text_lines];
-			nl[i] = before;
-			nl.splice(i + 1, 0, indent + after);
+			nl[idx] = before;
+			nl.splice(idx + 1, 0, indent + after);
 			text_lines = nl;
+			pending_caret = { i: idx + 1, offset: indent.length };
+			struct_version++;
 			emit();
-			requestAnimationFrame(() => {
-				const ni = inputs[i + 1];
-				if (ni) {
-					ni.focus();
-					ni.selectionStart = ni.selectionEnd = indent.length;
-				}
-			});
 			return;
 		}
-		if (e.key === 'ArrowUp') {
-			const idx = visible.indexOf(i);
-			if (idx > 0) {
-				e.preventDefault();
-				focus_line(visible[idx - 1], s);
-			}
-			return;
-		}
-		if (e.key === 'ArrowDown') {
-			const idx = visible.indexOf(i);
-			if (idx < visible.length - 1) {
-				e.preventDefault();
-				focus_line(visible[idx + 1], s);
-			}
-			return;
-		}
-		if (e.key === 'Backspace' && s === 0 && en === 0) {
-			const idx = visible.indexOf(i);
-			if (idx > 0) {
-				e.preventDefault();
-				const prev = visible[idx - 1];
-				const merged_len = text_lines[prev].length;
-				const nl = [...text_lines];
-				nl[prev] = nl[prev] + nl[i];
-				nl.splice(i, 1);
-				text_lines = nl;
-				emit();
-				requestAnimationFrame(() => {
-					const pi = inputs[prev];
-					if (pi) {
-						pi.focus();
-						pi.selectionStart = pi.selectionEnd = merged_len;
-					}
-				});
-			}
+		if (e.key === 'Backspace') {
+			const sel = window.getSelection();
+			if (sel && sel.toString().length > 0) return;
+			const info = sel_info();
+			if (!info) return;
+			const { idx, offset } = info;
+			if (offset !== 0) return;
+			const vis_idx = visible.indexOf(idx);
+			if (vis_idx <= 0) return;
+			e.preventDefault();
+			const prev = visible[vis_idx - 1];
+			const prev_text = text_lines[prev] ?? '';
+			const cur = text_lines[idx] ?? '';
+			const merged_len = prev_text.length;
+			const nl = [...text_lines];
+			nl[prev] = prev_text + cur;
+			nl.splice(idx, 1);
+			text_lines = nl;
+			pending_caret = { i: prev, offset: merged_len };
+			struct_version++;
+			emit();
 			return;
 		}
 	}
 
-	function on_paste(e: ClipboardEvent, i: number) {
-		const inp = e.currentTarget as HTMLInputElement;
+	function on_paste(e: ClipboardEvent) {
 		const text = e.clipboardData?.getData('text');
-		if (!text || !text.includes('\n')) return;
+		if (!text) return;
 		e.preventDefault();
-		const s = inp.selectionStart ?? 0;
-		const en = inp.selectionEnd ?? 0;
-		const v = inp.value;
+		const info = sel_info();
+		if (!info) return;
+		const { idx, offset } = info;
+		const cur = text_lines[idx] ?? '';
+		const before = cur.slice(0, offset);
+		const after = cur.slice(offset);
 		const parts = text.split('\n');
-		const before = v.slice(0, s);
-		const after = v.slice(en);
 		const nl = [...text_lines];
-		nl[i] = before + parts[0];
-		const mid = parts.slice(1, parts.length - 1);
-		const last = parts[parts.length - 1] + after;
-		const insert = [...mid, last];
-		nl.splice(i + 1, 0, ...insert);
+		if (parts.length === 1) {
+			nl[idx] = before + parts[0] + after;
+			pending_caret = { i: idx, offset: before.length + parts[0].length };
+		} else {
+			nl[idx] = before + parts[0];
+			const insert = parts.slice(1, parts.length - 1).concat(parts[parts.length - 1] + after);
+			nl.splice(idx + 1, 0, ...insert);
+			pending_caret = { i: idx + parts.length - 1, offset: (parts[parts.length - 1] ?? '').length };
+		}
 		text_lines = nl;
+		struct_version++;
 		emit();
-		requestAnimationFrame(() => {
-			const li = inputs[i + insert.length];
-			if (li) {
-				li.focus();
-				li.selectionStart = li.selectionEnd = (parts[parts.length - 1] ?? '').length;
-			}
-		});
 	}
 </script>
 
-<div class="editor" style="tab-size: {tab_size}">
-	{#each visible as i (i)}
-		<div class="row">
-			{#if kids[i]}
-				<button class="fold" onclick={() => toggle(i)} aria-label="toggle fold"
-					>{collapsed.has(i) ? '▸' : '▾'}</button
-				>
-			{:else}
-				<span class="fold-spacer"></span>
-			{/if}
-			<input
-				class="line"
-				style="tab-size: {tab_size}"
-				bind:this={inputs[i]}
-				value={text_lines[i]}
-				oninput={(e) => update_line(i, (e.currentTarget as HTMLInputElement).value)}
-				onkeydown={(e) => on_key(e, i)}
-				onpaste={(e) => on_paste(e, i)}
-				spellcheck="false"
-			/>
-		</div>
-	{/each}
+<div class="editor">
+	<div class="gutter">
+		{#each visible as i (i)}
+			<div class="gline">
+				{#if kids[i]}
+					<button class="fold" onclick={() => toggle(i)} aria-label="toggle fold"
+						>{collapsed.has(i) ? '▸' : '▾'}</button
+					>
+				{:else}
+					<span class="fold-spacer"></span>
+				{/if}
+			</div>
+		{/each}
+	</div>
+	<div
+		class="text"
+		contenteditable="true"
+		spellcheck="false"
+		bind:this={editor_el}
+		oninput={on_input}
+		onkeydown={on_key}
+		onpaste={on_paste}
+		style="tab-size: {tab_size}"
+	></div>
 </div>
 
 <style>
 	.editor {
 		display: flex;
-		flex-direction: column;
 		flex: 1;
 		min-height: 80px;
-		overflow-y: auto;
+		overflow: hidden;
 		border-top: 1px solid rgba(255, 255, 255, 0.04);
 		background: rgba(0, 0, 0, 0.2);
 		color: #ccc;
 		font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
 		font-size: 0.8125rem;
 		line-height: 1.6;
-		padding: 0.4rem 0;
 		border-radius: 0 0 12px 12px;
-		tab-size: 2;
 	}
 
 	.editor:focus-within {
 		background: rgba(0, 0, 0, 0.3);
 	}
 
-	.row {
+	.gutter {
+		flex: 0 0 auto;
+		padding: 0.4rem 0;
+		user-select: none;
+	}
+
+	.gline {
+		height: 1.6em;
 		display: flex;
 		align-items: center;
-		gap: 0.25rem;
-		padding-right: 0.75rem;
 	}
 
 	.fold {
@@ -233,16 +300,16 @@
 		width: 16px;
 	}
 
-	.line {
+	.text {
 		flex: 1;
-		border: none;
-		background: none;
-		color: inherit;
-		font-family: inherit;
-		font-size: inherit;
-		line-height: inherit;
-		padding: 0;
+		min-height: 80px;
+		overflow: auto;
+		padding: 0.4rem 0.75rem 0.4rem 0;
 		outline: none;
-		tab-size: 2;
+		white-space: pre;
+	}
+
+	.line {
+		min-height: 1.6em;
 	}
 </style>

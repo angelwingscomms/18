@@ -282,3 +282,67 @@ https://svelte.dev/e/a11y_interactive_supports_focus
 https://svelte.dev/e/a11y_role_has_required_aria_props
 10:17:40 AM [vite-plugin-svelte] src/lib/components/chat/SettingsModal.svelte:92:6 Elements with the ARIA role "combobox" must have the following attributes defined: "aria-controls" and "aria-expanded"
 https://svelte.dev/e/a11y_role_has_required_aria_props
+10:21:32 AM [vite-plugin-svelte] src/routes/login/+page.svelte:8:18 This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally
+
+[1;31m[500] GET /login/google[0m
+Error: Secret "GOOGLE_ID" not found
+    at google_client (src/lib/server/oauth.ts:5:57)
+    at GET (src/routes/login/google/+server.ts:7:20)
+    at /home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/runtime/server/endpoint.js?v=72083fb5:46:4
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at with_request_store (file:/home/ed/i/18/node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/exports/internal/event.js:77:20)
+    at render_endpoint (node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/runtime/server/endpoint.js?v=72083fb5:45:44)
+    at resolve (node_modules/.pnpm/@sveltejs+kit@2.69.1_@sveltejs+vite-plugin-svelte@7.1.2_svelte@5.56.4_@typescript-eslin_b1540eecef63334713b869d19433990b/node_modules/@sveltejs/kit/src/runtime/server/respond.js?v=72083fb5:626:23)
+    at async Object.handle (src/hooks.server.ts:15:20)
+
+[1;31m[404] GET /favicon.ico[0m
+10:28:37 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:28 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:28:37 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:14:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:28:37 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:237:1 `<div>` with a keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+10:28:37 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:310:1 Unused CSS selector ".line"
+https://svelte.dev/e/css_unused_selector
+10:28:37 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte, /src/lib/components/chat/NoteEditor.svelte?svelte&type=style&lang.css
+10:28:37 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:28:45 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:28 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:28:45 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:14:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:28:45 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:237:1 `<div>` with a keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+10:28:45 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:310:1 Unused CSS selector ".line"
+https://svelte.dev/e/css_unused_selector
+10:28:45 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:29:11 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:28 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:29:11 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:14:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:29:11 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:237:1 `<div>` with a keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+10:29:11 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:310:1 Unused CSS selector ".line"
+https://svelte.dev/e/css_unused_selector
+10:29:11 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:29:11 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:29:12 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:28 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:29:12 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:14:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:29:12 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:237:1 `<div>` with a keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+10:29:12 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:310:1 Unused CSS selector ".line"
+https://svelte.dev/e/css_unused_selector
+10:29:12 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:29:12 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte
+10:29:15 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:12:28 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:29:15 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:14:20 This reference only captures the initial value of `content`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally
+10:29:15 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:239:1 `<div>` with a keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+10:29:15 AM [vite-plugin-svelte] src/lib/components/chat/NoteEditor.svelte:312:1 Unused CSS selector ".line"
+https://svelte.dev/e/css_unused_selector
+10:29:15 AM [vite] (client) hmr update /src/lib/components/chat/NoteEditor.svelte
+10:29:15 AM [vite] (ssr) page reload src/lib/components/chat/NoteEditor.svelte

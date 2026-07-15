@@ -30,7 +30,7 @@
 	});
 
 	let recording = $derived(voice?.recording ?? false);
-	let voice_muted = $derived(voice?.voice_muted ?? false);
+	let silent_mode = $derived(voice?.silent_mode ?? false);
 	let audio_muted = $derived(voice?.audio_muted ?? false);
 	let toasts = $derived(voice?.toasts ?? []);
 </script>
@@ -53,12 +53,12 @@
 
 				<div class="sub-controls">
 					<button
-						class="control-dot {voice_muted ? 'muted' : ''}"
-						onclick={() => voice.toggleMicMute()}
-						title={voice_muted ? 'Unmute mic' : 'Mute mic'}
+						class="control-dot {silent_mode ? 'silent' : ''}"
+						onclick={() => voice.toggle_silent_mode()}
+						title={silent_mode ? 'Silent mode on — click to resume' : 'Mute / silent mode'}
 					>
-						{#if voice_muted}
-							<MicMuteIcon size={16} color="#f44" />
+						{#if silent_mode}
+							<MicMuteIcon size={16} color="#f5a623" />
 						{:else}
 							<MicIcon size={16} color={recording ? '#aaa' : '#555'} />
 						{/if}
@@ -239,6 +239,12 @@
 	.control-dot.muted {
 		border-color: rgba(255, 68, 68, 0.4);
 		background: rgba(255, 68, 68, 0.1);
+	}
+
+	.control-dot.silent {
+		border-color: rgba(245, 166, 35, 0.5);
+		background: rgba(245, 166, 35, 0.14);
+		box-shadow: 0 0 8px rgba(245, 166, 35, 0.3);
 	}
 
 	.control-dot.active {

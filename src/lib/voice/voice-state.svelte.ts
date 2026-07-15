@@ -339,6 +339,18 @@ export class VoiceState {
 		this.voice_muted = !this.voice_muted;
 	}
 
+	toggle_silent_mode() {
+		if (this.silent_mode) {
+			this.start_listening();
+		} else {
+			this.silent_mode = true;
+			this.interrupt_audio();
+			try {
+				this.gemini_live_session?.sendRealtimeInput({ text: 'silent mode on' });
+			} catch {}
+		}
+	}
+
 	toggleSpeakerMute() {
 		this.audio_muted = !this.audio_muted;
 		if (this.gemini_live_audio_gain) {

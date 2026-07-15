@@ -55,6 +55,11 @@ export class VoiceState {
 	recording = $state(false);
 	voice_muted = $state(false);
 	audio_muted = $state(false);
+	note_dictating = $state(false);
+	note_dictation_media_recorder: MediaRecorder | null = null;
+	note_dictation_chunks: Blob[] = [];
+	note_dictation_mic_stream: MediaStream | null = null;
+	note_dictation_cursor = 0;
 	gemini_live_session: any = null;
 	gemini_live_audio_ctx: AudioContext | null = null;
 	gemini_live_audio_gain: GainNode | null = null;
@@ -99,6 +104,7 @@ export class VoiceState {
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
 	openrouter_key = $state(browser && localStorage.getItem('openrouter_key') || '');
+	groq_key = $state(browser && localStorage.getItem('groq_key') || '');
 
 
 	system_prompt = $state(browser && localStorage.getItem('system_prompt') || '');
@@ -187,6 +193,9 @@ export class VoiceState {
 
 		$effect(() => {
 			if (browser) localStorage.setItem('system_prompt', this.system_prompt);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('groq_key', this.groq_key);
 		});
 		$effect(() => {
 			this.system_prompt;
@@ -333,6 +342,56 @@ export class VoiceState {
 			return `Changed voice to "${voice_name}" and restarting the live session to apply it.`;
 		}
 		return `Changed voice to "${voice_name}".`;
+	}
+
+	async startNoteDictation() {
+		if (this.note_dictating) return;
+		const stream = this.gemini_live_mic_stream || await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+		if (!stream) return;
+		this.note_dictation_mic_stream = stream;
+		this.note_dictation_chunks = [];
+		const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+		mr.ondataavailable = (e) => {
+			if (e.data.size > 0) this.note_dictation_chunks.push(e.data);
+		};
+		mr.onstop = () => {
+			this.note_dictating = false;
+			this.note_dictation_media_recorder = null;
+			if (this.note_dictation_mic_stream && this.note_dictation_mic_stream !== this.gemini_live_mic_stream) {
+				this.note_dictation_mic_stream.getTracks().forEach(t => t.stop());
+			}
+			this.note_dictation_mic_stream = null;
+			const blob = new Blob(this.note_dictation_chunks, { type: 'audio/webm' });
+			this.transcribe_and_append(blob);
+		};
+		this.note_dictation_media_recorder = mr;
+		mr.start();
+		this.note_dictating = true;
+	}
+
+	stopNoteDictation() {
+		if (!this.note_dictation_media_recorder) return;
+		this.note_dictation_media_recorder.stop();
+	}
+
+	async transcribe_and_append(blob: Blob) {
+		const n = this.active_note;
+		if (!n) return;
+		const form = new FormData();
+		form.set('audio', blob, 'dictation.webm');
+		if (this.groq_key) form.set('apiKey', this.groq_key);
+		try {
+			const res = await fetch('/api/voice/groq-transcribe', { method: 'POST', body: form });
+			const d: any = await res.json();
+			if (d.text) {
+				const pos = this.note_dictation_cursor;
+				const text = d.text + '\n';
+				n.b = n.b.slice(0, pos) + text + n.b.slice(pos);
+				this.note_dictation_cursor = pos + text.length;
+				this.notes = { ...this.notes };
+				this.qdrant_call('payload', n.i, undefined, n.b);
+			}
+		} catch {}
 	}
 
 	async load_thinking_sound() {}

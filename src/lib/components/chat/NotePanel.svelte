@@ -4,6 +4,7 @@
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
 	import FilesIcon from '$lib/components/icons/files-icon.svelte';
+	import MicIcon from '$lib/components/icons/mic-icon.svelte';
 
 	const v = get_voice_state();
 
@@ -66,6 +67,20 @@
 				<button class="note-toggle" onclick={() => show_files = true} title="All files">
 					<FilesIcon size={13} color="#888" />
 					<span class="note-label">Files</span>
+				</button>
+
+				<button
+					class="dictate-btn {v.note_dictating ? 'active' : ''}"
+					onclick={() => {
+						if (!textarea) return;
+						v.note_dictation_cursor = textarea.selectionStart ?? v.note_content.length;
+						if (v.note_dictating) v.stopNoteDictation();
+						else v.startNoteDictation();
+					}}
+					title="Dictate into note"
+				>
+					<MicIcon size={13} color={v.note_dictating ? '#4a9eff' : '#888'} />
+					<span class="note-label">{v.note_dictating ? 'Stop' : 'Dictate'}</span>
 				</button>
 
 			</div>
@@ -414,6 +429,38 @@
 
 	.file-del:hover {
 		background: rgba(255,255,255,0.08);
+	}
+
+	.dictate-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		background: none;
+		border: 1px solid rgba(255,255,255,0.06);
+		border-radius: 8px;
+		color: #888;
+		cursor: pointer;
+		padding: 0.25rem 0.5rem;
+		font-size: 0.8125rem;
+		width: fit-content;
+		transition: all 0.15s;
+	}
+
+	.dictate-btn:hover {
+		color: #ccc;
+		border-color: rgba(255,255,255,0.1);
+	}
+
+	.dictate-btn.active {
+		color: #4a9eff;
+		border-color: rgba(74, 158, 255, 0.3);
+		background: rgba(74, 158, 255, 0.08);
+		animation: dictate-pulse 1.4s ease-in-out infinite;
+	}
+
+	@keyframes dictate-pulse {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.55; }
 	}
 
 </style>

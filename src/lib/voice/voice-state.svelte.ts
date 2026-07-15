@@ -44,7 +44,9 @@ You also have a tool called clear_chat that clears all chat messages. Before cal
 
 You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id. Before calling edit_note, always call read_note first on the same note so you know the current content.
 
-The user can send you images. When you receive an image, acknowledge and describe what you see if asked.`;
+The user can send you images. When you receive an image, acknowledge and describe what you see if asked.
+
+There is a "silent mode". When it is active the microphone is effectively muted and you were not meant to hear the user — any message that begins with "silent mode on" means silent mode is currently active. While silent mode is on: ignore the user's message entirely and do NOT respond at all (no speech, no text, no tool calls). The ONLY exception is if the user asks you to start listening, unmute, or stop being silent — in that case you MUST call the start_listening tool. start_listening is the only tool you may ever call while silent mode is on.`;
 const KEY = Symbol('voice');
 
 export function set_voice_state(state: VoiceState) {
@@ -899,6 +901,14 @@ export class VoiceState {
 			this.start_thinking_sound();
 			(async () => {
 				for (const fc of msg.toolCall.functionCalls) {
+					if (this.silent_mode && fc.name !== 'start_listening') {
+						this.send_gemini_tool_response({
+							functionResponses: [
+								{ id: fc.id, name: fc.name, response: { result: 'Silent mode on — tool ignored.' } }
+							]
+						});
+						continue;
+					}
 					if (fc.name === 'exa_search') {
 						try {
 							const body: Record<string, unknown> = { query: fc.args.query, type: fc.args.type };
@@ -1050,6 +1060,9 @@ export class VoiceState {
 				} else if (fc.name === 'stop_listening') {
 					this.silent_mode = true;
 					this.interrupt_audio();
+					try {
+						this.gemini_live_session?.sendRealtimeInput({ text: 'silent mode on' });
+					} catch {}
 					this.send_gemini_tool_response({
 						functionResponses: [
 							{ id: fc.id, name: fc.name, response: { result: 'Listening silently — responses discarded until you call start_listening.' } }
@@ -1169,6 +1182,7 @@ export class VoiceState {
 			return;
 		}
 		const t = text.trim();
+		const send_text = this.silent_mode ? `silent mode on. ${t}` : t;
 		this.pending_clear = false;
 		const imgs = this.pending_images;
 		this.pending_images = [];
@@ -1186,7 +1200,7 @@ export class VoiceState {
 				const data = img.split(',')[1];
 				parts.push({ media: { data, mimeType: mime } });
 			}
-			if (t) parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${t}` : t });
+			if (t) parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${send_text}` : send_text });
 			for (const p of parts) {
 				this.gemini_live_session.sendRealtimeInput(p);
 			}

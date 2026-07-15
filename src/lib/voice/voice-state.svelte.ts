@@ -5,7 +5,9 @@ import type { ChatMsg, Note } from './types';
 import { play } from 'cuelume';
 import { model_options } from './types';
 
-function new_note_id() { return crypto.randomUUID(); }
+function new_note_id() {
+	return crypto.randomUUID();
+}
 
 function load_notes(): Record<string, Note> {
 	if (!browser) return {};
@@ -28,7 +30,9 @@ function load_notes(): Record<string, Note> {
 			return dict;
 		}
 		return data as Record<string, Note>;
-	} catch { return {}; }
+	} catch {
+		return {};
+	}
 }
 
 const SYS = `You are a helpful voice assistant. Keep responses extremely short — 1-3 sentences. Plain language, like talking to a friend. When the conversation starts, greet the user.
@@ -84,7 +88,6 @@ export class VoiceState {
 
 	rnnoise_node: AudioWorkletNode | null = null;
 
-
 	chat_messages = $state<ChatMsg[]>([]);
 	chat_queue = $state<{ text: string }[]>([]);
 	chat_loading = $state(false);
@@ -95,21 +98,21 @@ export class VoiceState {
 
 	output_turn_active = false;
 
-	model = $state(browser && localStorage.getItem('model') || model_options[0].v);
-	voice_name = $state(browser && localStorage.getItem('voice_name') || 'Kore');
+	model = $state((browser && localStorage.getItem('model')) || model_options[0].v);
+	voice_name = $state((browser && localStorage.getItem('voice_name')) || 'Kore');
 	noise_suppression = $state(browser && localStorage.getItem('noise_suppression') !== 'false');
 	voice_gain = $state(browser ? parseFloat(localStorage.getItem('voice_gain') ?? '1') : 1);
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
 	use_tab = $state(browser && localStorage.getItem('use_tab') === 'true');
-	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
-	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
-	openrouter_key = $state(browser && localStorage.getItem('openrouter_key') || '');
-	groq_key = $state(browser && localStorage.getItem('groq_key') || '');
+	fold_lines = $state(browser && localStorage.getItem('fold_lines') !== 'false');
+	gemini_key = $state((browser && localStorage.getItem('gemini_key')) || '');
+	exa_key = $state((browser && localStorage.getItem('exa_key')) || '');
+	openrouter_key = $state((browser && localStorage.getItem('openrouter_key')) || '');
+	groq_key = $state((browser && localStorage.getItem('groq_key')) || '');
 
-
-	system_prompt = $state(browser && localStorage.getItem('system_prompt') || '');
+	system_prompt = $state((browser && localStorage.getItem('system_prompt')) || '');
 	notes = $state<Record<string, Note>>(load_notes());
-	active_note_id = $state(browser ? (localStorage.getItem('active_note_id') || '') : '');
+	active_note_id = $state(browser ? localStorage.getItem('active_note_id') || '' : '');
 	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
 	open_note_ids = $state<string[]>([]);
 
@@ -135,7 +138,9 @@ export class VoiceState {
 
 	// ENTRANMENT - BINAURAL FREQUENCY
 	binaural_playing = $state(false);
-	binaural_volume = $state(browser ? parseFloat(localStorage.getItem('binaural_volume') ?? '0.3') : 0.3);
+	binaural_volume = $state(
+		browser ? parseFloat(localStorage.getItem('binaural_volume') ?? '0.3') : 0.3
+	);
 	show_binaural_settings = $state(false);
 
 	toasts = $state<{ id: number; msg: string; t: string }[]>([]);
@@ -158,9 +163,13 @@ export class VoiceState {
 			this.active_note_id = Object.values(this.notes)[0].i;
 		}
 		const stored_open = browser ? localStorage.getItem('open_note_ids') : null;
-		this.open_note_ids = stored_open ? stored_open.split(',').filter(Boolean) : Object.keys(this.notes);
+		this.open_note_ids = stored_open
+			? stored_open.split(',').filter(Boolean)
+			: Object.keys(this.notes);
 		$effect(() => {
-			return () => { this.cleanup(); };
+			return () => {
+				this.cleanup();
+			};
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('model', this.model);
@@ -181,6 +190,9 @@ export class VoiceState {
 			if (browser) localStorage.setItem('use_tab', String(this.use_tab));
 		});
 		$effect(() => {
+			if (browser) localStorage.setItem('fold_lines', String(this.fold_lines));
+		});
+		$effect(() => {
 			if (browser) localStorage.setItem('gemini_key', this.gemini_key);
 		});
 		$effect(() => {
@@ -189,7 +201,6 @@ export class VoiceState {
 		$effect(() => {
 			if (browser) localStorage.setItem('openrouter_key', this.openrouter_key);
 		});
-
 
 		$effect(() => {
 			if (browser) localStorage.setItem('system_prompt', this.system_prompt);
@@ -244,7 +255,9 @@ export class VoiceState {
 			if (!el) return;
 			this.chat_messages.length;
 			this.chat_queue.length;
-			requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+			requestAnimationFrame(() => {
+				el.scrollTop = el.scrollHeight;
+			});
 		});
 	}
 
@@ -255,7 +268,7 @@ export class VoiceState {
 	add_toast(msg: string, t: 'e' | 'i' = 'i') {
 		const id = ++this.toast_id;
 		this.toasts = [...this.toasts, { id, msg, t }];
-		setTimeout(() => this.toasts = this.toasts.filter(t => t.id !== id), 4000);
+		setTimeout(() => (this.toasts = this.toasts.filter((t) => t.id !== id)), 4000);
 	}
 
 	cleanup() {
@@ -285,14 +298,16 @@ export class VoiceState {
 		}
 
 		if (this.gemini_live_mic_stream) {
-			this.gemini_live_mic_stream.getTracks().forEach(t => t.stop());
+			this.gemini_live_mic_stream.getTracks().forEach((t) => t.stop());
 			this.gemini_live_mic_stream = null;
 		}
 
 		const session = this.gemini_live_session;
 		this.gemini_live_session = null;
 		if (session) {
-			try { session.close(); } catch {}
+			try {
+				session.close();
+			} catch {}
 		}
 
 		if (this.gemini_live_audio_gain) {
@@ -346,7 +361,9 @@ export class VoiceState {
 
 	async startNoteDictation() {
 		if (this.note_dictating) return;
-		const stream = this.gemini_live_mic_stream || await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+		const stream =
+			this.gemini_live_mic_stream ||
+			(await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null));
 		if (!stream) return;
 		this.note_dictation_mic_stream = stream;
 		this.note_dictation_chunks = [];
@@ -357,8 +374,11 @@ export class VoiceState {
 		mr.onstop = () => {
 			this.note_dictating = false;
 			this.note_dictation_media_recorder = null;
-			if (this.note_dictation_mic_stream && this.note_dictation_mic_stream !== this.gemini_live_mic_stream) {
-				this.note_dictation_mic_stream.getTracks().forEach(t => t.stop());
+			if (
+				this.note_dictation_mic_stream &&
+				this.note_dictation_mic_stream !== this.gemini_live_mic_stream
+			) {
+				this.note_dictation_mic_stream.getTracks().forEach((t) => t.stop());
 			}
 			this.note_dictation_mic_stream = null;
 			const blob = new Blob(this.note_dictation_chunks, { type: 'audio/webm' });
@@ -441,14 +461,16 @@ export class VoiceState {
 			let processorSource: MediaStreamAudioSourceNode | null = null;
 			if (this.noise_suppression) {
 				try {
-					const { RnnoiseWorkletNode, loadRnnoise } = await import('@sapphi-red/web-noise-suppressor');
-					const wasmBinary = await loadRnnoise(
-						{ url: '/rnnoise.wasm', simdUrl: '/rnnoise_simd.wasm' }
-					);
+					const { RnnoiseWorkletNode, loadRnnoise } =
+						await import('@sapphi-red/web-noise-suppressor');
+					const wasmBinary = await loadRnnoise({
+						url: '/rnnoise.wasm',
+						simdUrl: '/rnnoise_simd.wasm'
+					});
 					await audioCtx.audioWorklet.addModule('/rnnoise-worklet.js');
 					const rnnoiseNode = new RnnoiseWorkletNode(audioCtx, {
 						maxChannels: 1,
-						wasmBinary,
+						wasmBinary
 					});
 					this.rnnoise_node = rnnoiseNode;
 					const intermediateDest = audioCtx.createMediaStreamDestination();
@@ -491,43 +513,67 @@ export class VoiceState {
 							play('sparkle');
 						}
 					},
-					onmessage: (msg: any) => { this.gemini_live_handle(msg); },
+					onmessage: (msg: any) => {
+						this.gemini_live_handle(msg);
+					},
 					onerror: (e: any) => {
-						this.log('onerror code=' + e?.code + ' reason=' + e?.reason + ' message=' + e?.message + ' error=' + (e?.error?.message ?? e?.error ?? ''));
+						this.log(
+							'onerror code=' +
+								e?.code +
+								' reason=' +
+								e?.reason +
+								' message=' +
+								e?.message +
+								' error=' +
+								(e?.error?.message ?? e?.error ?? '')
+						);
 						this.handle_disconnect('error');
 					},
 					onclose: (e?: any) => {
-						this.log('onclose code=' + e?.code + ' reason="' + e?.reason + '" wasClean=' + e?.wasClean);
+						this.log(
+							'onclose code=' + e?.code + ' reason="' + e?.reason + '" wasClean=' + e?.wasClean
+						);
 						this.handle_disconnect('close');
-					},
+					}
 				},
 				config: {
 					responseModalities: ['AUDIO'] as any,
 					speechConfig: {
 						voiceConfig: {
-							prebuiltVoiceConfig: { voiceName: this.voice_name },
-						},
+							prebuiltVoiceConfig: { voiceName: this.voice_name }
+						}
 					} as any,
-					systemInstruction: { parts: [{ text: this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS }] } as any,
+					systemInstruction: {
+						parts: [{ text: this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS }]
+					} as any,
 					tools: get_tool_declarations(),
 					contextWindowCompression: { slidingWindow: {} },
-					sessionResumption: {},
-				} as any,
+					sessionResumption: {}
+				} as any
 			});
 			this.gemini_live_session = session;
-			const msgs = this.chat_messages.filter(m => m.content);
-			const initial = msgs.length > 0
-				? `[CONTEXT]\n${msgs.slice(-20).map(m => `${m.role}: ${m.content}`).join('\n')}\n[/CONTEXT]\n\nHello`
-				: 'Hello';
-			try { session.sendRealtimeInput({ text: initial }); } catch {}
+			const msgs = this.chat_messages.filter((m) => m.content);
+			const initial =
+				msgs.length > 0
+					? `[CONTEXT]\n${msgs
+							.slice(-20)
+							.map((m) => `${m.role}: ${m.content}`)
+							.join('\n')}\n[/CONTEXT]\n\nHello`
+					: 'Hello';
+			try {
+				session.sendRealtimeInput({ text: initial });
+			} catch {}
 		} catch (e) {
 			if (e instanceof DOMException && e.name === 'NotFoundError') {
 				try {
 					const devices = await navigator.mediaDevices.enumerateDevices();
-					const audio_inputs = devices.filter(d => d.kind === 'audioinput');
-					this.add_toast(audio_inputs.length === 0
-						? 'No microphone detected'
-						: 'Mic found but could not access it', 'e');
+					const audio_inputs = devices.filter((d) => d.kind === 'audioinput');
+					this.add_toast(
+						audio_inputs.length === 0
+							? 'No microphone detected'
+							: 'Mic found but could not access it',
+						'e'
+					);
 				} catch {
 					this.add_toast('No microphone found', 'e');
 				}
@@ -573,7 +619,7 @@ export class VoiceState {
 			this.rnnoise_node = null;
 		}
 		if (this.gemini_live_mic_stream) {
-			this.gemini_live_mic_stream.getTracks().forEach(t => t.stop());
+			this.gemini_live_mic_stream.getTracks().forEach((t) => t.stop());
 			this.gemini_live_mic_stream = null;
 		}
 		if (this.gemini_live_audio_gain) {
@@ -591,7 +637,9 @@ export class VoiceState {
 		const session = this.gemini_live_session;
 		this.gemini_live_session = null;
 		if (session) {
-			try { session.close(); } catch {}
+			try {
+				session.close();
+			} catch {}
 		}
 
 		this.gemini_live_closing = false;
@@ -619,7 +667,7 @@ export class VoiceState {
 			const res = await fetch('/api/voice/qdrant', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ a: 'scroll' }),
+				body: JSON.stringify({ a: 'scroll' })
 			});
 			const data = await res.json();
 			if (!data.notes) return;
@@ -627,7 +675,8 @@ export class VoiceState {
 			for (const qn of data.notes) {
 				if (!this.notes[qn.i]) {
 					this.notes = { ...this.notes, [qn.i]: { i: qn.i, t: qn.t, b: qn.b } };
-					if (!this.open_note_ids.includes(qn.i)) this.open_note_ids = [...this.open_note_ids, qn.i];
+					if (!this.open_note_ids.includes(qn.i))
+						this.open_note_ids = [...this.open_note_ids, qn.i];
 					changed = true;
 				}
 			}
@@ -635,7 +684,7 @@ export class VoiceState {
 				fetch('/api/voice/qdrant', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ a: 'upsert', i: id, t: note.t, b: note.b }),
+					body: JSON.stringify({ a: 'upsert', i: id, t: note.t, b: note.b })
 				}).catch(() => {});
 			}
 			localStorage.setItem('synced_user', this._user_id);
@@ -660,7 +709,7 @@ export class VoiceState {
 		try {
 			if (!this.gemini_live_closing && this.gemini_live_session) {
 				this.gemini_live_session.sendRealtimeInput({
-					audio: { data: btoa(binary), mimeType: 'audio/pcm;rate=16000' },
+					audio: { data: btoa(binary), mimeType: 'audio/pcm;rate=16000' }
 				});
 			}
 		} catch {}
@@ -689,7 +738,7 @@ export class VoiceState {
 			await fetch('/api/voice/qdrant', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ a, i, t, b }),
+				body: JSON.stringify({ a, i, t, b })
 			});
 		} catch {}
 	}
@@ -709,12 +758,18 @@ export class VoiceState {
 		const last = start + sliced.length;
 		let out = `Note: "${note.t}"\n`;
 		out += sliced.map((line, i) => `${start + i + 1}: ${line}`).join('\n');
-		if (last < total) out += `\n(Showing lines ${offset}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
+		if (last < total)
+			out += `\n(Showing lines ${offset}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
 		else out += `\n(End - total ${total} lines)`;
 		return out;
 	}
 
-	async edit_note(oldString: string, newString: string, replaceAll = false, note_id?: string): Promise<string> {
+	async edit_note(
+		oldString: string,
+		newString: string,
+		replaceAll = false,
+		note_id?: string
+	): Promise<string> {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
 		if (oldString === '') {
@@ -739,15 +794,17 @@ export class VoiceState {
 				const first = content.indexOf(oldString);
 				if (first !== -1) {
 					const last_c = content.lastIndexOf(oldString);
-					if (first !== last_c) return 'Error: Found multiple matches. Use replaceAll or provide more context.';
-					note.b = content.substring(0, first) + newString + content.substring(first + oldString.length);
+					if (first !== last_c)
+						return 'Error: Found multiple matches. Use replaceAll or provide more context.';
+					note.b =
+						content.substring(0, first) + newString + content.substring(first + oldString.length);
 					this.notes = { ...this.notes };
 					this.qdrant_call('payload', note.i, undefined, note.b);
 					play('tick');
 					return 'Edited note.';
 				}
 			}
-			if (attempt < 8) await new Promise(r => setTimeout(r, 100));
+			if (attempt < 8) await new Promise((r) => setTimeout(r, 100));
 		}
 		note.b = note.b + newString;
 		this.notes = { ...this.notes };
@@ -757,7 +814,12 @@ export class VoiceState {
 	}
 
 	list_notes(): string {
-		return Object.values(this.notes).map(n => `- ${n.i}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`).join('\n');
+		return Object.values(this.notes)
+			.map(
+				(n) =>
+					`- ${n.i}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`
+			)
+			.join('\n');
 	}
 
 	add_note(t = 'Note', b = ''): string {
@@ -773,7 +835,7 @@ export class VoiceState {
 		if (Object.keys(this.notes).length <= 1) return 'Error: Cannot delete the last note.';
 		const { [note_id]: _, ...rest } = this.notes;
 		this.notes = rest;
-		this.open_note_ids = this.open_note_ids.filter(id => id !== note_id);
+		this.open_note_ids = this.open_note_ids.filter((id) => id !== note_id);
 		if (this.active_note_id === note_id) {
 			this.active_note_id = Object.values(this.notes)[0]?.i ?? '';
 		}
@@ -804,7 +866,25 @@ export class VoiceState {
 			this.goaway_received = true;
 		}
 		if (msg.serverContent) {
-			console.log('[voice] serverContent:', JSON.stringify({ ...msg.serverContent, modelTurn: msg.serverContent.modelTurn ? { parts: msg.serverContent.modelTurn.parts?.map((p: any) => ({ ...p, inlineData: p.inlineData ? { mimeType: p.inlineData.mimeType, data: p.inlineData.data?.slice(0, 50) + '...' } : undefined })) } : undefined }));
+			console.log(
+				'[voice] serverContent:',
+				JSON.stringify({
+					...msg.serverContent,
+					modelTurn: msg.serverContent.modelTurn
+						? {
+								parts: msg.serverContent.modelTurn.parts?.map((p: any) => ({
+									...p,
+									inlineData: p.inlineData
+										? {
+												mimeType: p.inlineData.mimeType,
+												data: p.inlineData.data?.slice(0, 50) + '...'
+											}
+										: undefined
+								}))
+							}
+						: undefined
+				})
+			);
 		}
 		if (msg.toolCall?.functionCalls?.length) {
 			this.tool_call_pending = true;
@@ -819,18 +899,22 @@ export class VoiceState {
 							const res = await fetch('/api/voice/exa-search', {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify(body),
+								body: JSON.stringify(body)
 							});
 							const data = await res.json();
-							const snippets = data.results?.map((r: any) =>
-								`Title: ${r.title}\nURL: ${r.url}\nSnippet: ${(r.highlights?.[0] || r.text?.slice(0, 500) || '')}`
-							).join('\n\n') || 'No results found';
+							const snippets =
+								data.results
+									?.map(
+										(r: any) =>
+											`Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.highlights?.[0] || r.text?.slice(0, 500) || ''}`
+									)
+									.join('\n\n') || 'No results found';
 							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { result: snippets } }],
+								functionResponses: [{ id: fc.id, name: fc.name, response: { result: snippets } }]
 							});
 						} catch (e) {
 							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }],
+								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }]
 							});
 						}
 					} else if (fc.name === 'web_fetch') {
@@ -838,12 +922,16 @@ export class VoiceState {
 							const res = await fetch('/api/voice/web-fetch', {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ url: fc.args.url, offset: fc.args.offset ?? 1, limit: fc.args.limit ?? 2000 }),
+								body: JSON.stringify({
+									url: fc.args.url,
+									offset: fc.args.offset ?? 1,
+									limit: fc.args.limit ?? 2000
+								})
 							});
 							const data = await res.json();
 							if (data.error) {
 								this.send_gemini_tool_response({
-									functionResponses: [{ id: fc.id, name: fc.name, response: { error: data.error } }],
+									functionResponses: [{ id: fc.id, name: fc.name, response: { error: data.error } }]
 								});
 							} else {
 								const lines = data.lines as string[];
@@ -853,84 +941,112 @@ export class VoiceState {
 								const last = start + lines.length - 1;
 								let out = `URL: ${fc.args.url}\n`;
 								out += lines.map((line, i) => `${start + i}: ${line}`).join('\n');
-								if (last < total) out += `\n(Showing lines ${start}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
+								if (last < total)
+									out += `\n(Showing lines ${start}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
 								else out += `\n(End - total ${total} lines)`;
 								this.send_gemini_tool_response({
-									functionResponses: [{ id: fc.id, name: fc.name, response: { result: out } }],
+									functionResponses: [{ id: fc.id, name: fc.name, response: { result: out } }]
 								});
 							}
 						} catch (e) {
 							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }],
+								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }]
 							});
 						}
 					} else if (fc.name === 'read_note') {
-						const lines = this.read_note(fc.args.note_id, fc.args.offset ?? 1, fc.args.limit ?? 2000);
+						const lines = this.read_note(
+							fc.args.note_id,
+							fc.args.offset ?? 1,
+							fc.args.limit ?? 2000
+						);
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result: lines } }],
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result: lines } }]
 						});
 					} else if (fc.name === 'edit_note') {
-						const result = await this.edit_note(fc.args.oldString ?? '', fc.args.newString ?? '', fc.args.replaceAll ?? false, fc.args.note_id);
+						const result = await this.edit_note(
+							fc.args.oldString ?? '',
+							fc.args.newString ?? '',
+							fc.args.replaceAll ?? false,
+							fc.args.note_id
+						);
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
 						});
 					} else if (fc.name === 'clear_chat') {
 						if (this.chat_messages.length === 0) {
 							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Chat is already empty.' } }],
+								functionResponses: [
+									{ id: fc.id, name: fc.name, response: { result: 'Chat is already empty.' } }
+								]
 							});
 						} else if (!this.pending_clear) {
 							this.pending_clear = true;
-							setTimeout(() => { this.pending_clear = false; }, 30000);
+							setTimeout(() => {
+								this.pending_clear = false;
+							}, 30000);
 							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Please ask the user to confirm they want to clear all chat messages.' } }],
+								functionResponses: [
+									{
+										id: fc.id,
+										name: fc.name,
+										response: {
+											result: 'Please ask the user to confirm they want to clear all chat messages.'
+										}
+									}
+								]
 							});
 						} else {
 							this.pending_clear = false;
 							this.clearChat();
 							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { result: 'Chat cleared.' } }],
+								functionResponses: [
+									{ id: fc.id, name: fc.name, response: { result: 'Chat cleared.' } }
+								]
 							});
 						}
 					} else if (fc.name === 'list_notes') {
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result: this.list_notes() } }],
+							functionResponses: [
+								{ id: fc.id, name: fc.name, response: { result: this.list_notes() } }
+							]
 						});
 					} else if (fc.name === 'add_note') {
 						const result = this.add_note(fc.args.title, fc.args.content);
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
 						});
 					} else if (fc.name === 'delete_note') {
 						const result = this.delete_note(fc.args.note_id);
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
 						});
 					} else if (fc.name === 'rename_note') {
 						const result = this.rename_note(fc.args.title, fc.args.note_id);
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
 						});
 					} else if (fc.name === 'focus_note') {
-					const result = this.focus_note(fc.args.note_id);
-					this.send_gemini_tool_response({
-						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
-					});
-				} else if (fc.name === 'start_listening') {
-					const result = this.start_listening();
-					this.send_gemini_tool_response({
-						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
-					});
-				} else if (fc.name === 'change_voice') {
-					const result = await this.change_voice(fc.args.voice_name);
-					this.send_gemini_tool_response({
-						functionResponses: [{ id: fc.id, name: fc.name, response: { result } }],
-					});
-				} else if (fc.name === 'stop_listening') {
+						const result = this.focus_note(fc.args.note_id);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
+						});
+					} else if (fc.name === 'start_listening') {
+						const result = this.start_listening();
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
+						});
+					} else if (fc.name === 'change_voice') {
+						const result = await this.change_voice(fc.args.voice_name);
+						this.send_gemini_tool_response({
+							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
+						});
+					} else if (fc.name === 'stop_listening') {
 						this.toggleMicMute();
 						const s = this.voice_muted ? 'muted' : 'unmuted';
 						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result: `Microphone ${s}.` } }],
+							functionResponses: [
+								{ id: fc.id, name: fc.name, response: { result: `Microphone ${s}.` } }
+							]
 						});
 					}
 				}
@@ -955,10 +1071,16 @@ export class VoiceState {
 						buffer.getChannelData(0).set(float32);
 						this.gemini_live_audio_queue = [...this.gemini_live_audio_queue, buffer];
 						this.play_next_audio();
-					} catch (e) { console.log('[voice] audio decode error:', e); }
+					} catch (e) {
+						console.log('[voice] audio decode error:', e);
+					}
 				}
 			}
-			if (audio_count === 0) console.log('[voice] modelTurn with no audio parts — parts:', msg.serverContent.modelTurn.parts?.map((p: any) => Object.keys(p)));
+			if (audio_count === 0)
+				console.log(
+					'[voice] modelTurn with no audio parts — parts:',
+					msg.serverContent.modelTurn.parts?.map((p: any) => Object.keys(p))
+				);
 		}
 		if (msg.serverContent?.interrupted) {
 			this.interrupt_audio();
@@ -987,7 +1109,13 @@ export class VoiceState {
 	}
 
 	play_next_audio() {
-		if (!this.gemini_live_audio_ctx || !this.gemini_live_audio_gain || this.gemini_live_audio_playing || this.gemini_live_audio_queue.length === 0) return;
+		if (
+			!this.gemini_live_audio_ctx ||
+			!this.gemini_live_audio_gain ||
+			this.gemini_live_audio_playing ||
+			this.gemini_live_audio_queue.length === 0
+		)
+			return;
 		this.gemini_live_audio_playing = true;
 		const buffer = this.gemini_live_audio_queue[0];
 		this.gemini_live_audio_queue = this.gemini_live_audio_queue.slice(1);
@@ -1018,7 +1146,8 @@ export class VoiceState {
 		this.gemini_live_current_source?.stop();
 		this.gemini_live_current_source = null;
 		setTimeout(() => {
-			if (this.gemini_live_audio_gain) this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
+			if (this.gemini_live_audio_gain)
+				this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
 		}, 200);
 	}
 
@@ -1035,7 +1164,10 @@ export class VoiceState {
 		this.chat_input = '';
 		if (this.chat_input_ref) this.chat_input_ref.style.height = 'auto';
 		this.output_turn_active = false;
-		this.chat_messages = [...this.chat_messages, { role: 'user', content: t || '(image)', images: imgs.length ? imgs : undefined }];
+		this.chat_messages = [
+			...this.chat_messages,
+			{ role: 'user', content: t || '(image)', images: imgs.length ? imgs : undefined }
+		];
 		try {
 			const parts: Record<string, unknown>[] = [];
 			for (const img of imgs) {

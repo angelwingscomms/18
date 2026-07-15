@@ -138,11 +138,16 @@
 	</div>
 	{#if v.show_note && v.active_note}
 		{#if v.fold_lines}
-			<NoteEditor content={v.note_content} onchange={(t) => (v.note_content = t)} />
+			<NoteEditor
+				content={v.note_content}
+				tab_size={v.tab_size}
+				onchange={(t) => (v.note_content = t)}
+			/>
 		{:else}
 			<textarea
 				bind:this={textarea}
 				class="note-textarea"
+				style="tab-size: {v.tab_size}"
 				bind:value={v.note_content}
 				placeholder="Write your note here..."
 				spellcheck="false"

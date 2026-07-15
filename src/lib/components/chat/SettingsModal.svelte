@@ -172,6 +172,19 @@
 					</label>
 				</div>
 
+				<section class="setting-section">
+					<h3 class="setting-label">Tab size</h3>
+					<span class="toggle-desc" style="margin-top:-4px">Spaces shown per tab in notes.</span>
+					<input
+						type="number"
+						class="tab-size-input"
+						bind:value={v.tab_size}
+						min="1"
+						max="8"
+						step="1"
+					/>
+				</section>
+
 				<div class="keys-section">
 					<h3 class="setting-label">Your API keys (optional)</h3>
 					<input
@@ -636,6 +649,31 @@
 
 	.gain-input:focus {
 		border-color: rgba(74, 158, 255, 0.4);
+	}
+
+	.tab-size-input {
+		width: 5rem;
+		height: 40px;
+		border-radius: 10px;
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		background: rgba(0, 0, 0, 0.3);
+		color: #eee;
+		font-size: 1rem;
+		text-align: center;
+		padding: 0 0.5rem;
+		outline: none;
+		transition: border-color 0.2s;
+		-moz-appearance: textfield;
+	}
+
+	.tab-size-input:focus {
+		border-color: rgba(74, 158, 255, 0.4);
+	}
+
+	.tab-size-input::-webkit-inner-spin-button,
+	.tab-size-input::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
 	}
 
 	.slider-row {

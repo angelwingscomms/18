@@ -2,7 +2,11 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { indent_level, has_children, visible_indices } from '$lib/voice/fold';
 
-	let { content, onchange }: { content: string; onchange: (t: string) => void } = $props();
+	let {
+		content,
+		tab_size = 1,
+		onchange
+	}: { content: string; tab_size?: number; onchange: (t: string) => void } = $props();
 
 	let text_lines = $state<string[]>(content.split('\n'));
 	let collapsed = new SvelteSet<number>();
@@ -155,7 +159,7 @@
 	}
 </script>
 
-<div class="editor">
+<div class="editor" style="tab-size: {tab_size}">
 	{#each visible as i (i)}
 		<div class="row">
 			{#if kids[i]}
@@ -167,6 +171,7 @@
 			{/if}
 			<input
 				class="line"
+				style="tab-size: {tab_size}"
 				bind:this={inputs[i]}
 				value={text_lines[i]}
 				oninput={(e) => update_line(i, (e.currentTarget as HTMLInputElement).value)}

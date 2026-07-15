@@ -105,6 +105,7 @@ export class VoiceState {
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
 	use_tab = $state(browser && localStorage.getItem('use_tab') === 'true');
 	fold_lines = $state(browser && localStorage.getItem('fold_lines') !== 'false');
+	tab_size = $state(browser ? parseInt(localStorage.getItem('tab_size') ?? '1', 10) || 1 : 1);
 	gemini_key = $state((browser && localStorage.getItem('gemini_key')) || '');
 	exa_key = $state((browser && localStorage.getItem('exa_key')) || '');
 	openrouter_key = $state((browser && localStorage.getItem('openrouter_key')) || '');
@@ -191,6 +192,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('fold_lines', String(this.fold_lines));
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('tab_size', String(this.tab_size));
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('gemini_key', this.gemini_key);

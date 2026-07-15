@@ -122,6 +122,17 @@
           </label>
         </div>
 
+        <div class="toggle-section">
+          <label class="toggle-row">
+            <span>
+              <span class="toggle-label">Use Tab for tabs</span>
+              <span class="toggle-desc">Press Tab to insert a tab in the note instead of leaving it.</span>
+            </span>
+            <input type="checkbox" bind:checked={v.use_tab} class="toggle-input" />
+            <span class="toggle-switch {v.use_tab ? 'on' : ''}"></span>
+          </label>
+        </div>
+
         <div class="keys-section">
           <h3 class="setting-label">Your API keys (optional)</h3>
           <input

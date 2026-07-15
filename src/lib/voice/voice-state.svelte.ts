@@ -95,6 +95,7 @@ export class VoiceState {
 	noise_suppression = $state(browser && localStorage.getItem('noise_suppression') !== 'false');
 	voice_gain = $state(browser ? parseFloat(localStorage.getItem('voice_gain') ?? '1') : 1);
 	quiet = $state(browser && localStorage.getItem('quiet') === 'true');
+	use_tab = $state(browser && localStorage.getItem('use_tab') === 'true');
 	gemini_key = $state(browser && localStorage.getItem('gemini_key') || '');
 	exa_key = $state(browser && localStorage.getItem('exa_key') || '');
 	openrouter_key = $state(browser && localStorage.getItem('openrouter_key') || '');
@@ -169,6 +170,9 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('quiet', String(this.quiet));
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('use_tab', String(this.use_tab));
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('gemini_key', this.gemini_key);

@@ -111,6 +111,18 @@
 			bind:value={v.note_content}
 			placeholder="Write your note here..."
 			spellcheck="false"
+			onkeydown={(e) => {
+				if (e.key !== 'Tab' || !v.use_tab) return;
+				e.preventDefault();
+				const el = e.currentTarget;
+				const s = el.selectionStart;
+				const en = el.selectionEnd;
+				const val = el.value;
+				v.note_content = val.slice(0, s) + '\t' + val.slice(en);
+				requestAnimationFrame(() => {
+					el.selectionStart = el.selectionEnd = s + 1;
+				});
+			}}
 		></textarea>
 	{/if}
 </div>

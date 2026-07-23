@@ -2,8 +2,10 @@ export type ChatMsg = { role: 'user' | 'assistant'; content: string; images?: st
 
 export interface Note {
 	i: string;
+	n: string;
 	t: string;
 	b: string;
+	u: number;
 }
 
 export const model_options = [

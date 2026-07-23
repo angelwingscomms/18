@@ -30,7 +30,7 @@
 	});
 
 	let recording = $derived(voice?.recording ?? false);
-	let silent_mode = $derived(voice?.silent_mode ?? false);
+	let quiet_mode = $derived(voice?.quiet_mode ?? false);
 	let audio_muted = $derived(voice?.audio_muted ?? false);
 	let toasts = $derived(voice?.toasts ?? []);
 </script>
@@ -53,11 +53,11 @@
 
 				<div class="sub-controls">
 					<button
-						class="control-dot {silent_mode ? 'silent' : ''}"
-						onclick={() => voice.toggle_silent_mode()}
-						title={silent_mode ? 'Silent mode on — click to resume' : 'Mute / silent mode'}
+						class="control-dot {quiet_mode ? 'silent' : ''}"
+						onclick={() => voice.toggle_quiet_mode()}
+						title={quiet_mode ? 'Quiet mode on — click to resume talking' : 'Quiet mode (mute voice + replies)'}
 					>
-						{#if silent_mode}
+						{#if quiet_mode}
 							<MicMuteIcon size={16} color="#f5a623" />
 						{:else}
 							<MicIcon size={16} color={recording ? '#aaa' : '#555'} />

@@ -45,6 +45,15 @@
 		v.open_note_ids = v.open_note_ids.filter((id) => id !== note_id);
 	}
 
+	let highlight_line = $derived(
+		v.ai_edit_signal && v.ai_edit_signal.note_id === v.active_note_id
+			? v.ai_edit_signal.line
+			: undefined
+	);
+
+	let flash_textarea = $state(false);
+	let last_textarea_content = v.note_content;
+
 	$effect(() => {
 		const n = v.active_note;
 		if (textarea && n) {
@@ -53,6 +62,33 @@
 			textarea.style.height =
 				Math.max(line_h * 4, Math.min(line_h * 40, n.b.split('\n').length * line_h + 24)) + 'px';
 		}
+	});
+
+	// Plain-textarea equivalent of NoteEditor's highlight+caret handling — an AI edit changes
+	// v.note_content out from under the textarea, so restore/preserve where reasonable.
+	$effect(() => {
+		const nc = v.note_content;
+		if (!v.fold_lines && textarea && nc !== last_textarea_content) {
+			const had_focus = document.activeElement === textarea;
+			if (had_focus) {
+				const old_pos = textarea.selectionStart;
+				const prefix = last_textarea_content.slice(0, old_pos);
+				const new_pos = nc.startsWith(prefix) ? prefix.length : Math.min(old_pos, nc.length);
+				requestAnimationFrame(() => {
+					if (textarea) textarea.selectionStart = textarea.selectionEnd = new_pos;
+				});
+			}
+		}
+		last_textarea_content = nc;
+	});
+
+	$effect(() => {
+		const sig = v.ai_edit_signal;
+		if (!sig || sig.note_id !== v.active_note_id || v.fold_lines || !textarea) return;
+		const line_h = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
+		textarea.scrollTop = Math.max(0, (sig.line - 3) * line_h);
+		flash_textarea = true;
+		setTimeout(() => (flash_textarea = false), 1600);
 	});
 </script>
 
@@ -106,6 +142,9 @@
 									title={note.t}
 								>
 									<span class="tab-title">{note.t}</span>
+									{#if v.ai_edit_signal?.note_id === note.i && note.i !== v.active_note_id}
+										<span class="ai-edit-dot" title="Edited by AI"></span>
+									{/if}
 									<span
 										class="tab-close"
 										onclick={(e) => {
@@ -131,11 +170,12 @@
 				content={v.note_content}
 				tab_size={v.tab_size}
 				onchange={(t) => (v.note_content = t)}
+				highlight_line={highlight_line}
 			/>
 		{:else}
 			<textarea
 				bind:this={textarea}
-				class="note-textarea"
+				class="note-textarea {flash_textarea ? 'ai-edit-flash' : ''}"
 				style="tab-size: {v.tab_size}"
 				bind:value={v.note_content}
 				placeholder="Write your note here..."
@@ -291,6 +331,25 @@
 		text-overflow: ellipsis;
 	}
 
+	.ai-edit-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #4a9eff;
+		flex-shrink: 0;
+		animation: ai-dot-pulse 1s ease-in-out infinite;
+	}
+
+	@keyframes ai-dot-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.3;
+		}
+	}
+
 	.tab-close {
 		background: none;
 		border: none;
@@ -368,6 +427,19 @@
 
 	.note-textarea::placeholder {
 		color: #444;
+	}
+
+	.note-textarea.ai-edit-flash {
+		animation: ai-edit-flash-anim 1.6s ease-out;
+	}
+
+	@keyframes ai-edit-flash-anim {
+		0% {
+			background: rgba(74, 158, 255, 0.18);
+		}
+		100% {
+			background: rgba(0, 0, 0, 0.2);
+		}
 	}
 
 	.note-toggle-row {

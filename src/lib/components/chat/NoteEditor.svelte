@@ -5,8 +5,14 @@
 	let {
 		content,
 		tab_size = 1,
-		onchange
-	}: { content: string; tab_size?: number; onchange: (t: string) => void } = $props();
+		onchange,
+		highlight_line
+	}: {
+		content: string;
+		tab_size?: number;
+		onchange: (t: string) => void;
+		highlight_line?: number;
+	} = $props();
 
 	let editor_el = $state<HTMLDivElement | null>(null);
 	let text_lines: string[] = content.split('\n');
@@ -26,11 +32,43 @@
 
 	$effect(() => {
 		if (content !== last_emitted) {
-			text_lines = content.split('\n');
-			collapsed.clear();
+			const new_lines = content.split('\n');
+			// Content changed from outside (e.g. an AI edit) — if the user is mid-caret here,
+			// try to keep it on the same line of text rather than letting it reset to the start.
+			const had_focus = editor_el?.contains(document.activeElement) ?? false;
+			if (had_focus) {
+				const info = sel_info();
+				if (info) {
+					const old_text = text_lines[info.idx] ?? '';
+					let new_idx = new_lines[info.idx] === old_text ? info.idx : -1;
+					for (let d = 1; new_idx === -1 && d < new_lines.length; d++) {
+						if (new_lines[info.idx - d] === old_text) new_idx = info.idx - d;
+						else if (new_lines[info.idx + d] === old_text) new_idx = info.idx + d;
+					}
+					if (new_idx === -1) new_idx = Math.min(info.idx, new_lines.length - 1);
+					pending_caret = { i: new_idx, offset: Math.min(info.offset, (new_lines[new_idx] ?? '').length) };
+				}
+			}
+			for (const idx of [...collapsed]) {
+				if (idx >= new_lines.length) collapsed.delete(idx);
+			}
+			text_lines = new_lines;
 			last_emitted = content;
 			struct_version++;
 		}
+	});
+
+	$effect(() => {
+		const hl = highlight_line;
+		if (hl == null || !editor_el) return;
+		const idx = hl - 1;
+		requestAnimationFrame(() => {
+			const d = editor_el?.querySelector(`.line[data-i="${idx}"]`) as HTMLElement | null;
+			if (!d) return;
+			d.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			d.classList.add('ai-edit-flash');
+			setTimeout(() => d.classList.remove('ai-edit-flash'), 1600);
+		});
 	});
 
 	function emit() {
@@ -127,10 +165,16 @@
 
 	function on_input() {
 		if (!editor_el) return;
+		// Only visible lines are rendered as .line divs — merge them back by
+		// original index instead of rebuilding wholesale, or collapsed/hidden
+		// lines would be silently dropped from text_lines.
 		const divs = editor_el.querySelectorAll('.line');
-		const arr: string[] = [];
-		divs.forEach((d) => arr.push((d as HTMLElement).textContent ?? ''));
-		text_lines = arr;
+		const nl = [...text_lines];
+		divs.forEach((d) => {
+			const i = parseInt((d as HTMLElement).dataset.i ?? '-1', 10);
+			if (i >= 0 && i < nl.length) nl[i] = (d as HTMLElement).textContent ?? '';
+		});
+		text_lines = nl;
 		emit();
 	}
 
@@ -319,5 +363,18 @@
 
 	.line {
 		min-height: 1.6em;
+	}
+
+	:global(.line.ai-edit-flash) {
+		animation: ai-edit-flash-anim 1.6s ease-out;
+	}
+
+	@keyframes ai-edit-flash-anim {
+		0% {
+			background: rgba(74, 158, 255, 0.35);
+		}
+		100% {
+			background: transparent;
+		}
 	}
 </style>

@@ -1,7 +1,9 @@
 import { browser } from '$app/environment';
 import { getContext, setContext, untrack } from 'svelte';
-import { get_tool_declarations } from './gemini-live-dispatcher';
+import { SvelteMap } from 'svelte/reactivity';
+import { get_tool_declarations, tool_handlers } from './gemini-live-dispatcher';
 import type { ChatMsg, Note } from './types';
+import { apply_edit } from './note_edit';
 import { play } from 'cuelume';
 import { model_options } from './types';
 
@@ -24,12 +26,23 @@ function load_notes(): Record<string, Note> {
 					if ('id' in n) id = (n as any).id;
 					else id = new_note_id();
 				}
-				dict[id] = { i: id, t: n.t || n.title || 'Note', b: n.b || (n as any).content || '' };
+				dict[id] = {
+					i: id,
+					n: n.n || '',
+					t: n.t || n.title || 'Note',
+					b: n.b || (n as any).content || '',
+					u: n.u || Date.now()
+				};
 			}
 			localStorage.setItem('notes', JSON.stringify(dict));
 			return dict;
 		}
-		return data as Record<string, Note>;
+		const dict = data as Record<string, Note>;
+		for (const id of Object.keys(dict)) {
+			if (!dict[id].n) dict[id].n = '';
+			if (!dict[id].u) dict[id].u = Date.now();
+		}
+		return dict;
 	} catch {
 		return {};
 	}
@@ -42,11 +55,15 @@ You also have a tool called web_fetch that fetches and reads the content of a sp
 
 You also have a tool called clear_chat that clears all chat messages. Before calling clear_chat, you must ask the user for confirmation. Only proceed if the user explicitly confirms.
 
-You also have note tools for working with the user's notes. read_note to read a note, edit_note to edit, list_notes to list all notes, add_note to create, delete_note to remove, rename_note to rename. Each note has a title and content. Always refer to the note title when talking to the user, not the id. Before calling edit_note, always call read_note first on the same note so you know the current content.
+You have note tools for working with the user's notes. Notes are identified by short handles like "n1", "n2" — never invent or guess a handle, use exactly what manage_notes(list), read_note, search_notes, or the [NOTES] block below gives you. Tools: read_note, edit_note (surgical exact-text replace — if it errors, the current content is included so you can retry immediately), write_note (replace a note's entire content — prefer this over chaining several edit_note calls when rewriting or restructuring most of a note), insert_note (insert text after a given line number without needing to match existing text), search_notes (semantic search across all the user's notes, for when they describe a note by topic instead of by name), and manage_notes for everything else — list all notes, create one, delete one, rename one, or focus one as the active note — by passing an action of "list"/"create"/"delete"/"rename"/"focus". The current notes and the active note's content are included below in a [NOTES] block, kept fresh at the start of each connection — trust it instead of calling read_note first, unless the user tells you a note changed or you see a "[notes] ... was just edited by the user" message, in which case re-read that note before editing it. Always refer to a note by its title when talking to the user, never by its handle or id.
 
 The user can send you images. When you receive an image, acknowledge and describe what you see if asked.
 
-There is a "silent mode". When it is active the microphone is effectively muted and you were not meant to hear the user — any message that begins with "silent mode on" means silent mode is currently active. While silent mode is on: ignore the user's message entirely and do NOT respond at all (no speech, no text, no tool calls). The ONLY exception is if the user wants to talk to you — this includes saying or implying things like "start listening", "resume chat", "unmute", "stop being silent", calling your name (e.g. "Gemini", "Google", "hey Gemini", "hey chat", "hey live", "live", "chat"), or otherwise addressing you directly. In any of those cases you MUST call the start_listening tool to unmute. start_listening is the only tool you may ever call while silent mode is on.`;
+You have three tools for controlling this conversation, and they mean different things — do not confuse them:
+- stay_quiet: mute your voice and hide your chat replies, but keep listening and keep working normally, including calling tools. Call this when the user says things like "stay quiet", "stop talking", "shush", "quiet down", or otherwise wants a break from hearing/seeing you but not from you listening. While quiet mode is active you must say nothing out loud and send no chat text at all, until resume_talking is called — this is enforced by muting your speaker as a backstop, but you should still behave as if fully silent.
+- resume_talking: unmute your voice and start replying normally again. Call this when the user asks you to resume, unmute, stop being quiet, or calls your name / addresses you directly (e.g. "Gemini", "hey chat", "hey live", "live", "chat") while quiet mode is active.
+- end_chat: actually end the conversation and disconnect. Call this only when the user clearly wants to end the session for good (e.g. "end chat", "hang up", "disconnect", "we're done"), never just because they want quiet. After end_chat the user must manually reconnect to talk to you again.
+If you receive a message beginning with "quiet mode on", the user manually muted you from the UI — behave exactly as if you had just called stay_quiet.`;
 const KEY = Symbol('voice');
 
 export function set_voice_state(state: VoiceState) {
@@ -60,8 +77,8 @@ export function get_voice_state(): VoiceState {
 export class VoiceState {
 	recording = $state(false);
 	voice_muted = $state(false);
-	silent_mode = $state(false);
-	pending_silent = false;
+	quiet_mode = $state(false);
+	pending_quiet = false;
 	audio_muted = $state(false);
 	note_dictating = $state(false);
 	note_dictation_media_recorder: MediaRecorder | null = null;
@@ -88,6 +105,7 @@ export class VoiceState {
 	goaway_received = false;
 	reconnecting = $state(false);
 	prompt_reconnect_timer: ReturnType<typeof setTimeout> | null = null;
+	session_resumption_handle: string | null = null;
 	_user_id = '';
 
 	rnnoise_node: AudioWorkletNode | null = null;
@@ -119,6 +137,10 @@ export class VoiceState {
 	notes = $state<Record<string, Note>>(load_notes());
 	active_note_id = $state(browser ? localStorage.getItem('active_note_id') || '' : '');
 	open_note_ids = $state<string[]>([]);
+	note_seq = 1;
+	_sync_timers: SvelteMap<string, ReturnType<typeof setTimeout>> = new SvelteMap();
+	ai_edit_signal = $state<{ note_id: string; line: number; token: number } | null>(null);
+	_ai_edit_token = 0;
 
 	get active_note(): Note | undefined {
 		return this.notes[this.active_note_id];
@@ -132,8 +154,9 @@ export class VoiceState {
 		const n = this.active_note;
 		if (n) {
 			n.b = val;
+			n.u = Date.now();
 			this.notes = { ...this.notes };
-			this.qdrant_call('payload', n.i, undefined, n.b);
+			this.schedule_note_sync(n);
 		}
 	}
 
@@ -158,10 +181,22 @@ export class VoiceState {
 					this.toggleMicMute();
 				}
 			});
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible') this.sync_from_qdrant();
+			});
 		}
 		if (Object.keys(this.notes).length === 0) {
 			const i = new_note_id();
-			this.notes = { [i]: { i, t: 'Note', b: '' } };
+			this.notes = { [i]: { i, n: 'n1', t: 'Note', b: '', u: Date.now() } };
+		}
+		let max_seq = 0;
+		for (const note of Object.values(this.notes)) {
+			const m = /^n(\d+)$/.exec(note.n || '');
+			if (m) max_seq = Math.max(max_seq, parseInt(m[1], 10));
+		}
+		this.note_seq = max_seq + 1;
+		for (const note of Object.values(this.notes)) {
+			if (!note.n) note.n = this.new_note_handle();
 		}
 		if (!this.active_note_id || !this.notes[this.active_note_id]) {
 			this.active_note_id = Object.values(this.notes)[0].i;
@@ -336,36 +371,41 @@ export class VoiceState {
 		this.voice_muted = !this.voice_muted;
 	}
 
-	toggle_silent_mode() {
-		if (this.silent_mode) {
-			this.start_listening();
+	apply_speaker_gain() {
+		if (this.gemini_live_audio_gain) {
+			this.gemini_live_audio_gain.gain.value = this.audio_muted || this.quiet_mode ? 0 : 1;
+		}
+	}
+
+	toggle_quiet_mode() {
+		if (this.quiet_mode) {
+			this.resume_talking();
 		} else {
-			this.silent_mode = true;
+			this.quiet_mode = true;
+			this.pending_quiet = false;
 			this.interrupt_audio();
+			this.apply_speaker_gain();
 			try {
-				this.gemini_live_session?.sendRealtimeInput({ text: 'silent mode on' });
+				this.gemini_live_session?.sendRealtimeInput({ text: 'quiet mode on' });
 			} catch {}
 		}
 	}
 
 	toggleSpeakerMute() {
 		this.audio_muted = !this.audio_muted;
-		if (this.gemini_live_audio_gain) {
-			this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
-		}
+		this.apply_speaker_gain();
 	}
 
-	start_listening(): string {
-		this.voice_muted = false;
-		this.silent_mode = false;
-		this.pending_silent = false;
-		this.interrupt_audio();
-		if (this.gemini_live_audio_gain) {
-			this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
-		}
-		return this.gemini_live_session
-			? 'Microphone is on.'
-			: 'Microphone on — connect voice chat to talk.';
+	stay_quiet(): string {
+		this.pending_quiet = true;
+		return 'Will go quiet once this turn finishes speaking.';
+	}
+
+	resume_talking(): string {
+		this.quiet_mode = false;
+		this.pending_quiet = false;
+		this.apply_speaker_gain();
+		return this.gemini_live_session ? 'Unmuted — you can talk again.' : 'Unmuted.';
 	}
 
 	change_voice(voice_name?: string): string {
@@ -426,9 +466,10 @@ export class VoiceState {
 				const pos = this.note_dictation_cursor;
 				const text = d.text + '\n';
 				n.b = n.b.slice(0, pos) + text + n.b.slice(pos);
+				n.u = Date.now();
 				this.note_dictation_cursor = pos + text.length;
 				this.notes = { ...this.notes };
-				this.qdrant_call('payload', n.i, undefined, n.b);
+				this.schedule_note_sync(n);
 			}
 		} catch {}
 	}
@@ -470,7 +511,7 @@ export class VoiceState {
 			const audioCtx = new AudioContext();
 			this.gemini_live_audio_ctx = audioCtx;
 			const outputGain = audioCtx.createGain();
-			outputGain.gain.value = this.audio_muted ? 0 : 1;
+			outputGain.gain.value = this.audio_muted || this.quiet_mode ? 0 : 1;
 			outputGain.connect(audioCtx.destination);
 			this.gemini_live_audio_gain = outputGain;
 			this.load_thinking_sound();
@@ -563,11 +604,17 @@ export class VoiceState {
 						}
 					} as any,
 					systemInstruction: {
-						parts: [{ text: this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS }]
+						parts: [
+							{
+								text: `${this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS}\n\n${this.notes_context_block()}`
+							}
+						]
 					} as any,
 					tools: get_tool_declarations(),
 					contextWindowCompression: { slidingWindow: {} },
-					sessionResumption: {}
+					sessionResumption: this.session_resumption_handle
+						? ({ handle: this.session_resumption_handle } as any)
+						: {}
 				} as any
 			});
 			this.gemini_live_session = session;
@@ -677,7 +724,7 @@ export class VoiceState {
 	set user_id(v: string) {
 		if (this._user_id === v) return;
 		this._user_id = v;
-		if (v && localStorage.getItem('synced_user') !== v) this.sync_from_qdrant();
+		if (v) this.sync_from_qdrant();
 	}
 
 	async sync_from_qdrant() {
@@ -688,30 +735,42 @@ export class VoiceState {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ a: 'scroll' })
 			});
-			const data = await res.json();
+			const data: any = await res.json();
 			if (!data.notes) return;
-			let changed = false;
-			for (const qn of data.notes) {
-				if (!this.notes[qn.i]) {
-					this.notes = { ...this.notes, [qn.i]: { i: qn.i, t: qn.t, b: qn.b } };
-					if (!this.open_note_ids.includes(qn.i))
-						this.open_note_ids = [...this.open_note_ids, qn.i];
-					changed = true;
+			const remote_ids: string[] = [];
+			for (const rn of data.notes as { i: string; t: string; b: string; u: number }[]) {
+				remote_ids.push(rn.i);
+				const local = this.notes[rn.i];
+				if (!local) {
+					const handle = this.new_note_handle();
+					this.notes = { ...this.notes, [rn.i]: { i: rn.i, n: handle, t: rn.t, b: rn.b, u: rn.u } };
+					if (!this.open_note_ids.includes(rn.i)) this.open_note_ids = [...this.open_note_ids, rn.i];
+				} else if (rn.u > (local.u || 0)) {
+					local.t = rn.t;
+					local.b = rn.b;
+					local.u = rn.u;
+					this.notes = { ...this.notes };
+				} else if ((local.u || 0) > rn.u) {
+					this.qdrant_call('upsert', rn.i, local.t, local.b, local.u);
+				}
+			}
+			for (const tomb of (data.tombstones ?? []) as { i: string; u: number }[]) {
+				const local = this.notes[tomb.i];
+				if (local && Object.keys(this.notes).length > 1 && tomb.u > (local.u || 0)) {
+					const { [tomb.i]: _drop, ...rest } = this.notes;
+					this.notes = rest;
+					this.open_note_ids = this.open_note_ids.filter((x) => x !== tomb.i);
+					if (this.active_note_id === tomb.i) this.active_note_id = Object.values(this.notes)[0]?.i ?? '';
 				}
 			}
 			for (const [id, note] of Object.entries(this.notes)) {
-				fetch('/api/voice/qdrant', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ a: 'upsert', i: id, t: note.t, b: note.b })
-				}).catch(() => {});
+				if (!remote_ids.includes(id)) this.qdrant_call('upsert', id, note.t, note.b, note.u);
 			}
-			localStorage.setItem('synced_user', this._user_id);
 		} catch {}
 	}
 
 	gemini_process_audio = (e: AudioProcessingEvent) => {
-		if (this.voice_muted || this.gemini_live_closing || this.tool_call_pending) return;
+		if (this.voice_muted || this.gemini_live_closing) return;
 		if (!this.gemini_live_can_send()) return;
 		const input = e.inputBuffer.getChannelData(0);
 		const nativeRate = this.gemini_live_audio_ctx?.sampleRate || 48000;
@@ -751,20 +810,76 @@ export class VoiceState {
 		} catch {}
 	}
 
-	async qdrant_call(a: string, i: string, t?: string, b?: string) {
+	async qdrant_call(a: string, i?: string, t?: string, b?: string, u?: number, q?: string) {
 		if (!browser) return;
 		try {
 			await fetch('/api/voice/qdrant', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ a, i, t, b })
+				body: JSON.stringify({ a, i, t, b, u, q })
 			});
 		} catch {}
 	}
 
+	new_note_handle(): string {
+		return 'n' + this.note_seq++;
+	}
+
+	schedule_note_sync(note: Note) {
+		const id = note.i;
+		const existing = this._sync_timers.get(id);
+		if (existing) clearTimeout(existing);
+		this._sync_timers.set(
+			id,
+			setTimeout(() => {
+				this._sync_timers.delete(id);
+				this.qdrant_call('payload', note.i, undefined, note.b, note.u);
+				this.push_staleness_notice(note);
+			}, 1500)
+		);
+	}
+
+	push_staleness_notice(note: Note) {
+		if (!this.gemini_live_can_send()) return;
+		try {
+			this.gemini_live_session.sendRealtimeInput({
+				text: `[notes] ${note.n} "${note.t}" was just edited by the user — re-read it before calling edit_note on it.`
+			});
+		} catch {}
+	}
+
+	signal_ai_edit(note_id: string, line: number) {
+		const token = ++this._ai_edit_token;
+		this.ai_edit_signal = { note_id, line, token };
+		setTimeout(() => {
+			if (this.ai_edit_signal?.token === token) this.ai_edit_signal = null;
+		}, 2500);
+	}
+
+	notes_context_block(): string {
+		const list = Object.values(this.notes)
+			.map(
+				(n) =>
+					`${n.n} "${n.t}" — ${n.b.split('\n').length} lines${n.i === this.active_note_id ? ' [active]' : ''}`
+			)
+			.join('\n');
+		const active = this.active_note;
+		let active_block = '';
+		if (active) {
+			const line_count = active.b.split('\n').length;
+			active_block =
+				line_count <= 100
+					? `\n\n[ACTIVE NOTE]\n${this.read_note(active.n)}\n[/ACTIVE NOTE]`
+					: `\n\n[ACTIVE NOTE ${active.n} "${active.t}"]\n(${line_count} lines — too long to inline; use read_note to view it)\n[/ACTIVE NOTE]`;
+		}
+		return `[NOTES]\n${list}${active_block}\n[/NOTES]`;
+	}
+
 	note_for_id(note_id?: string): Note | undefined {
-		if (note_id) return this.notes[note_id];
-		return this.active_note;
+		if (!note_id) return this.active_note;
+		const by_handle = Object.values(this.notes).find((nt) => nt.n === note_id);
+		if (by_handle) return by_handle;
+		return this.notes[note_id];
 	}
 
 	read_note(note_id?: string, offset = 1, limit = 2000): string {
@@ -775,7 +890,7 @@ export class VoiceState {
 		const sliced = lines.slice(start, start + limit);
 		const total = lines.length;
 		const last = start + sliced.length;
-		let out = `Note: "${note.t}"\n`;
+		let out = `Note ${note.n} "${note.t}"\n`;
 		out += sliced.map((line, i) => `${start + i + 1}: ${line}`).join('\n');
 		if (last < total)
 			out += `\n(Showing lines ${offset}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
@@ -783,83 +898,100 @@ export class VoiceState {
 		return out;
 	}
 
-	async edit_note(
-		oldString: string,
-		newString: string,
-		replaceAll = false,
-		note_id?: string
-	): Promise<string> {
+	edit_note(oldString: string, newString: string, replaceAll = false, note_id?: string): string {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
-		if (oldString === '') {
-			note.b = note.b + newString;
-			this.notes = { ...this.notes };
-			this.qdrant_call('payload', note.i, undefined, note.b);
-			play('tick');
-			return 'Appended to note.';
+		const result = apply_edit(note.b, oldString, newString, replaceAll);
+		if (!result.ok) {
+			return `Error: ${result.error}\n\n${this.read_note(note.n)}`;
 		}
-		for (let attempt = 0; attempt < 9; attempt++) {
-			const content = note.b;
-			if (replaceAll) {
-				const count = content.split(oldString).length - 1;
-				if (count > 0) {
-					note.b = content.split(oldString).join(newString);
-					this.notes = { ...this.notes };
-					this.qdrant_call('payload', note.i, undefined, note.b);
-					play('tick');
-					return `Replaced ${count} occurrence(s) in note.`;
-				}
-			} else {
-				const first = content.indexOf(oldString);
-				if (first !== -1) {
-					const last_c = content.lastIndexOf(oldString);
-					if (first !== last_c)
-						return 'Error: Found multiple matches. Use replaceAll or provide more context.';
-					note.b =
-						content.substring(0, first) + newString + content.substring(first + oldString.length);
-					this.notes = { ...this.notes };
-					this.qdrant_call('payload', note.i, undefined, note.b);
-					play('tick');
-					return 'Edited note.';
-				}
-			}
-			if (attempt < 8) await new Promise((r) => setTimeout(r, 100));
-		}
-		note.b = note.b + newString;
+		const line = note.b.slice(0, result.at).split('\n').length;
+		note.b = result.content;
+		note.u = Date.now();
 		this.notes = { ...this.notes };
-		this.qdrant_call('payload', note.i, undefined, note.b);
+		this.qdrant_call('payload', note.i, undefined, note.b, note.u);
+		this.signal_ai_edit(note.i, line);
 		play('tick');
-		return 'Appended to note (oldString not found after 9 attempts).';
+		return `${result.message}\n\n${this.read_note(note.n)}`;
+	}
+
+	write_note(content: string, note_id?: string): string {
+		const note = this.note_for_id(note_id);
+		if (!note) return 'Error: Note not found.';
+		note.b = content;
+		note.u = Date.now();
+		this.notes = { ...this.notes };
+		this.qdrant_call('payload', note.i, undefined, note.b, note.u);
+		this.signal_ai_edit(note.i, 1);
+		play('tick');
+		return `Wrote note ${note.n} "${note.t}" (${content.split('\n').length} lines).`;
+	}
+
+	insert_note(line: number, text: string, note_id?: string): string {
+		const note = this.note_for_id(note_id);
+		if (!note) return 'Error: Note not found.';
+		const lines = note.b.split('\n');
+		const at = Math.max(0, Math.min(line, lines.length));
+		lines.splice(at, 0, ...text.split('\n'));
+		note.b = lines.join('\n');
+		note.u = Date.now();
+		this.notes = { ...this.notes };
+		this.qdrant_call('payload', note.i, undefined, note.b, note.u);
+		this.signal_ai_edit(note.i, at + 1);
+		play('tick');
+		return `Inserted at line ${at + 1}.\n\n${this.read_note(note.n)}`;
+	}
+
+	async tool_search_notes(query: string): Promise<string> {
+		const res = await fetch('/api/voice/qdrant', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ a: 'search', q: query })
+		});
+		const data: any = await res.json();
+		if (!data.ok) throw new Error(data.e || 'search failed');
+		if (!data.hits?.length) return 'No matching notes found.';
+		return data.hits
+			.map((h: any) => {
+				const local = this.notes[h.i];
+				const handle = local?.n ?? h.i;
+				return `${handle} "${h.t}": ${String(h.b ?? '').slice(0, 200)}`;
+			})
+			.join('\n\n');
 	}
 
 	list_notes(): string {
 		return Object.values(this.notes)
 			.map(
 				(n) =>
-					`- ${n.i}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`
+					`- ${n.n}: "${n.t}" (${n.b.split('\n').length} lines)${n.i === this.active_note_id ? ' [active]' : ''}`
 			)
 			.join('\n');
 	}
 
 	add_note(t = 'Note', b = ''): string {
 		const i = new_note_id();
-		this.notes = { [i]: { i, t, b }, ...this.notes };
+		const n = this.new_note_handle();
+		const u = Date.now();
+		this.notes = { [i]: { i, n, t, b, u }, ...this.notes };
 		this.active_note_id = i;
 		if (!this.open_note_ids.includes(i)) this.open_note_ids = [i, ...this.open_note_ids];
-		this.qdrant_call('upsert', i, t, b);
-		return `Created note "${t}" (id: ${i}).`;
+		this.qdrant_call('upsert', i, t, b, u);
+		return `Created note ${n} "${t}".`;
 	}
 
 	delete_note(note_id: string): string {
-		if (!this.notes[note_id]) return 'Error: Note not found.';
+		const note = this.note_for_id(note_id);
+		if (!note) return 'Error: Note not found.';
 		if (Object.keys(this.notes).length <= 1) return 'Error: Cannot delete the last note.';
-		const { [note_id]: _, ...rest } = this.notes;
+		const id = note.i;
+		const { [id]: _, ...rest } = this.notes;
 		this.notes = rest;
-		this.open_note_ids = this.open_note_ids.filter((id) => id !== note_id);
-		if (this.active_note_id === note_id) {
+		this.open_note_ids = this.open_note_ids.filter((x) => x !== id);
+		if (this.active_note_id === id) {
 			this.active_note_id = Object.values(this.notes)[0]?.i ?? '';
 		}
-		this.qdrant_call('delete', note_id);
+		this.qdrant_call('delete', id);
 		return 'Deleted note.';
 	}
 
@@ -867,8 +999,9 @@ export class VoiceState {
 		const note = this.note_for_id(note_id);
 		if (!note) return 'Error: Note not found.';
 		note.t = title;
+		note.u = Date.now();
 		this.notes = { ...this.notes };
-		this.qdrant_call('payload', note.i, note.t);
+		this.qdrant_call('payload', note.i, note.t, undefined, note.u);
 		return `Renamed note to "${title}".`;
 	}
 
@@ -877,10 +1010,88 @@ export class VoiceState {
 		if (!n) return 'Error: Note not found.';
 		this.active_note_id = n.i;
 		if (!this.open_note_ids.includes(n.i)) this.open_note_ids = [...this.open_note_ids, n.i];
-		return `Focused note "${n.t}".`;
+		return `Focused note ${n.n} "${n.t}".`;
+	}
+
+	manage_notes(action: string, args: Record<string, any>): string {
+		switch (action) {
+			case 'list':
+				return this.list_notes();
+			case 'create':
+				return this.add_note(args.title, args.content);
+			case 'delete':
+				return this.delete_note(args.note_id);
+			case 'rename':
+				return this.rename_note(args.title, args.note_id);
+			case 'focus':
+				return this.focus_note(args.note_id);
+			default:
+				return `Error: unknown action "${action}". Use list, create, delete, rename, or focus.`;
+		}
+	}
+
+	async tool_exa_search(query: string, type?: string): Promise<string> {
+		const body: Record<string, unknown> = { query, type };
+		if (this.exa_key) body.apiKey = this.exa_key;
+		const res = await fetch('/api/voice/exa-search', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body)
+		});
+		const data: any = await res.json();
+		return (
+			data.results
+				?.map(
+					(r: any) =>
+						`Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.highlights?.[0] || r.text?.slice(0, 500) || ''}`
+				)
+				.join('\n\n') || 'No results found'
+		);
+	}
+
+	async tool_web_fetch(url: string, offset = 1, limit = 2000): Promise<string> {
+		const res = await fetch('/api/voice/web-fetch', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ url, offset, limit })
+		});
+		const data: any = await res.json();
+		if (data.error) throw new Error(data.error);
+		const lines = data.lines as string[];
+		const total = data.total as number;
+		const start = data.offset as number;
+		const last = start + lines.length - 1;
+		let out = `URL: ${url}\n`;
+		out += lines.map((line, i) => `${start + i}: ${line}`).join('\n');
+		out +=
+			last < total
+				? `\n(Showing lines ${start}-${last} of ${total}. Use offset=${last + 1} to continue.)`
+				: `\n(End - total ${total} lines)`;
+		return out;
+	}
+
+	tool_clear_chat(): string {
+		if (this.chat_messages.length === 0) return 'Chat is already empty.';
+		if (!this.pending_clear) {
+			this.pending_clear = true;
+			setTimeout(() => {
+				this.pending_clear = false;
+			}, 30000);
+			return 'Please ask the user to confirm they want to clear all chat messages.';
+		}
+		this.pending_clear = false;
+		this.clearChat();
+		return 'Chat cleared.';
+	}
+
+	tool_end_chat(): string {
+		return 'Ending the chat now — reconnect manually to talk again.';
 	}
 
 	gemini_live_handle(msg: any) {
+		if (msg.sessionResumptionUpdate?.newHandle) {
+			this.session_resumption_handle = msg.sessionResumptionUpdate.newHandle;
+		}
 		if (msg.goAway) {
 			this.log('GoAway received, reason=' + (msg.goAway.reason || 'none'));
 			this.goaway_received = true;
@@ -908,177 +1119,29 @@ export class VoiceState {
 		}
 		if (msg.toolCall?.functionCalls?.length) {
 			this.tool_call_pending = true;
-			const has_stop = msg.toolCall.functionCalls.some((c) => c.name === 'stop_listening');
-			if (!has_stop) {
+			const has_stay_quiet = msg.toolCall.functionCalls.some((c: any) => c.name === 'stay_quiet');
+			if (!has_stay_quiet) {
 				this.interrupt_audio();
 				this.start_thinking_sound();
 			}
 			(async () => {
 				for (const fc of msg.toolCall.functionCalls) {
-					if (this.silent_mode && fc.name !== 'start_listening') {
-						this.send_gemini_tool_response({
-							functionResponses: [
-								{ id: fc.id, name: fc.name, response: { result: 'Silent mode on — tool ignored.' } }
-							]
-						});
-						continue;
+					let response: Record<string, unknown>;
+					try {
+						const handler = tool_handlers[fc.name];
+						if (!handler) throw new Error(`Unknown tool: ${fc.name}`);
+						const result = await handler(this, fc.args ?? {});
+						response = { result };
+					} catch (e) {
+						response = { error: e instanceof Error ? e.message : String(e) };
 					}
-					if (fc.name === 'exa_search') {
-						try {
-							const body: Record<string, unknown> = { query: fc.args.query, type: fc.args.type };
-							if (this.exa_key) body.apiKey = this.exa_key;
-							const res = await fetch('/api/voice/exa-search', {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify(body)
-							});
-							const data = await res.json();
-							const snippets =
-								data.results
-									?.map(
-										(r: any) =>
-											`Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.highlights?.[0] || r.text?.slice(0, 500) || ''}`
-									)
-									.join('\n\n') || 'No results found';
-							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { result: snippets } }]
-							});
-						} catch (e) {
-							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }]
-							});
-						}
-					} else if (fc.name === 'web_fetch') {
-						try {
-							const res = await fetch('/api/voice/web-fetch', {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({
-									url: fc.args.url,
-									offset: fc.args.offset ?? 1,
-									limit: fc.args.limit ?? 2000
-								})
-							});
-							const data = await res.json();
-							if (data.error) {
-								this.send_gemini_tool_response({
-									functionResponses: [{ id: fc.id, name: fc.name, response: { error: data.error } }]
-								});
-							} else {
-								const lines = data.lines as string[];
-								const total = data.total as number;
-								const offset = data.offset as number;
-								const start = offset;
-								const last = start + lines.length - 1;
-								let out = `URL: ${fc.args.url}\n`;
-								out += lines.map((line, i) => `${start + i}: ${line}`).join('\n');
-								if (last < total)
-									out += `\n(Showing lines ${start}-${last} of ${total}. Use offset=${last + 1} to continue.)`;
-								else out += `\n(End - total ${total} lines)`;
-								this.send_gemini_tool_response({
-									functionResponses: [{ id: fc.id, name: fc.name, response: { result: out } }]
-								});
-							}
-						} catch (e) {
-							this.send_gemini_tool_response({
-								functionResponses: [{ id: fc.id, name: fc.name, response: { error: String(e) } }]
-							});
-						}
-					} else if (fc.name === 'read_note') {
-						const lines = this.read_note(
-							fc.args.note_id,
-							fc.args.offset ?? 1,
-							fc.args.limit ?? 2000
-						);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result: lines } }]
-						});
-					} else if (fc.name === 'edit_note') {
-						const result = await this.edit_note(
-							fc.args.oldString ?? '',
-							fc.args.newString ?? '',
-							fc.args.replaceAll ?? false,
-							fc.args.note_id
-						);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-					} else if (fc.name === 'clear_chat') {
-						if (this.chat_messages.length === 0) {
-							this.send_gemini_tool_response({
-								functionResponses: [
-									{ id: fc.id, name: fc.name, response: { result: 'Chat is already empty.' } }
-								]
-							});
-						} else if (!this.pending_clear) {
-							this.pending_clear = true;
-							setTimeout(() => {
-								this.pending_clear = false;
-							}, 30000);
-							this.send_gemini_tool_response({
-								functionResponses: [
-									{
-										id: fc.id,
-										name: fc.name,
-										response: {
-											result: 'Please ask the user to confirm they want to clear all chat messages.'
-										}
-									}
-								]
-							});
-						} else {
-							this.pending_clear = false;
-							this.clearChat();
-							this.send_gemini_tool_response({
-								functionResponses: [
-									{ id: fc.id, name: fc.name, response: { result: 'Chat cleared.' } }
-								]
-							});
-						}
-					} else if (fc.name === 'list_notes') {
-						this.send_gemini_tool_response({
-							functionResponses: [
-								{ id: fc.id, name: fc.name, response: { result: this.list_notes() } }
-							]
-						});
-					} else if (fc.name === 'add_note') {
-						const result = this.add_note(fc.args.title, fc.args.content);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-					} else if (fc.name === 'delete_note') {
-						const result = this.delete_note(fc.args.note_id);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-					} else if (fc.name === 'rename_note') {
-						const result = this.rename_note(fc.args.title, fc.args.note_id);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-					} else if (fc.name === 'focus_note') {
-						const result = this.focus_note(fc.args.note_id);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-					} else if (fc.name === 'start_listening') {
-						const result = this.start_listening();
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-					} else if (fc.name === 'change_voice') {
-						const result = await this.change_voice(fc.args.voice_name);
-						this.send_gemini_tool_response({
-							functionResponses: [{ id: fc.id, name: fc.name, response: { result } }]
-						});
-				} else if (fc.name === 'stop_listening') {
-					this.pending_silent = true;
 					this.send_gemini_tool_response({
-						functionResponses: [
-							{ id: fc.id, name: fc.name, response: { result: 'Listening silently — responses discarded until you call start_listening.' } }
-						]
+						functionResponses: [{ id: fc.id, name: fc.name, response }]
 					});
-				}
+					if (fc.name === 'end_chat') {
+						this.cleanup();
+						break;
+					}
 				}
 				this.stop_thinking_sound();
 			})();
@@ -1089,7 +1152,7 @@ export class VoiceState {
 			for (const part of msg.serverContent.modelTurn.parts) {
 				if (part.inlineData?.mimeType?.startsWith('audio/')) {
 					audio_count++;
-					if (this.silent_mode) continue;
+					if (this.audio_muted || this.quiet_mode) continue;
 					try {
 						const binary = atob(part.inlineData.data);
 						const bytes = new Uint8Array(binary.length);
@@ -1117,14 +1180,12 @@ export class VoiceState {
 			this.interrupt_audio();
 		}
 		if (msg.serverContent?.inputTranscription?.text) {
-			this.pending_clear = false;
-			if (this.silent_mode) return;
 			const text = msg.serverContent.inputTranscription.text;
 			this.output_turn_active = false;
 			this.chat_messages = [...this.chat_messages, { role: 'user', content: text }];
 		}
 		if (msg.serverContent?.outputTranscription?.text) {
-			if (this.silent_mode) return;
+			if (this.quiet_mode) return;
 			const text = msg.serverContent.outputTranscription.text;
 			if (!this.output_turn_active) {
 				this.output_turn_active = true;
@@ -1137,14 +1198,14 @@ export class VoiceState {
 			}
 		}
 		if (msg.serverContent?.turnComplete) {
-			if (this.pending_silent) {
-				this.pending_silent = false;
-				this.silent_mode = true;
+			if (this.pending_quiet) {
+				this.pending_quiet = false;
+				this.quiet_mode = true;
+				this.apply_speaker_gain();
 				try {
-					this.gemini_live_session?.sendRealtimeInput({ text: 'silent mode on' });
+					this.gemini_live_session?.sendRealtimeInput({ text: 'quiet mode on' });
 				} catch {}
 			}
-			if (this.silent_mode) return;
 			this.output_turn_active = false;
 		}
 	}
@@ -1187,8 +1248,7 @@ export class VoiceState {
 		this.gemini_live_current_source?.stop();
 		this.gemini_live_current_source = null;
 		setTimeout(() => {
-			if (this.gemini_live_audio_gain)
-				this.gemini_live_audio_gain.gain.value = this.audio_muted ? 0 : 1;
+			this.apply_speaker_gain();
 		}, 200);
 	}
 
@@ -1199,8 +1259,7 @@ export class VoiceState {
 			return;
 		}
 		const t = text.trim();
-		const send_text = this.silent_mode ? `silent mode on. ${t}` : t;
-		this.pending_clear = false;
+		const send_text = this.quiet_mode ? `quiet mode on. ${t}` : t;
 		const imgs = this.pending_images;
 		this.pending_images = [];
 		this.chat_input = '';

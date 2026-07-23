@@ -4,7 +4,6 @@
 	import MarkIcon from '$lib/components/icons/mark-icon.svelte';
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import PlusIcon from '$lib/components/icons/plus-icon.svelte';
-	import FilesIcon from '$lib/components/icons/files-icon.svelte';
 	import MicIcon from '$lib/components/icons/mic-icon.svelte';
 
 	const v = get_voice_state();
@@ -61,18 +60,9 @@
 	<div class="note-header">
 		<div class="note-tabs">
 			<div class="note-toggle-row">
-				<button
-					class="note-toggle"
-					onclick={() => (v.show_note = !v.show_note)}
-					title="Toggle note"
-				>
+				<button class="note-toggle" onclick={() => (show_files = true)} title="All notes">
 					<MarkIcon size={13} color="#888" />
-					<span class="note-label">{v.show_note ? 'Notes' : 'Note'}</span>
-				</button>
-
-				<button class="note-toggle" onclick={() => (show_files = true)} title="All files">
-					<FilesIcon size={13} color="#888" />
-					<span class="note-label">Files</span>
+					<span class="note-label">Notes</span>
 				</button>
 
 				<button
@@ -88,9 +78,12 @@
 					<MicIcon size={13} color={v.note_dictating ? '#4a9eff' : '#888'} />
 					<span class="note-label">{v.note_dictating ? 'Stop' : 'Dictate'}</span>
 				</button>
+
+				<button class="tab-add" onclick={add} title="Add note">
+					<PlusIcon size={12} color="#888" />
+				</button>
 			</div>
-			{#if v.show_note}
-				<div class="tabs-scroll">
+			<div class="tabs-scroll">
 					{#each v.open_note_ids as id (id)}
 						{#if v.notes[id]}
 							{@const note = v.notes[id]}
@@ -129,14 +122,10 @@
 							{/if}
 						{/if}
 					{/each}
-					<button class="tab-add" onclick={add} title="Add note">
-						<PlusIcon size={12} color="#888" />
-					</button>
-				</div>
-			{/if}
+			</div>
 		</div>
 	</div>
-	{#if v.show_note && v.active_note}
+	{#if v.active_note}
 		{#if v.fold_lines}
 			<NoteEditor
 				content={v.note_content}

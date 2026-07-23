@@ -85,7 +85,15 @@
 		const sel = window.getSelection();
 		if (!sel || sel.rangeCount === 0) return null;
 		const range = sel.getRangeAt(0);
-		const line = line_el_from(range.startContainer);
+		let line = line_el_from(range.startContainer);
+		if (!line && range.startContainer === editor_el) {
+			// Clicked in empty space below/around the lines: fall back to the nearest line.
+			const lines = editor_el?.querySelectorAll('.line');
+			if (lines && lines.length > 0) {
+				line = lines[Math.min(range.startOffset, lines.length - 1)] as HTMLElement;
+				return { line, idx: parseInt(line.dataset.i ?? '-1', 10), offset: line.textContent?.length ?? 0 };
+			}
+		}
 		if (!line) return null;
 		const idx = parseInt(line.dataset.i ?? '-1', 10);
 		if (Number.isNaN(idx)) return null;

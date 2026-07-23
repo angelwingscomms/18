@@ -118,7 +118,6 @@ export class VoiceState {
 	system_prompt = $state((browser && localStorage.getItem('system_prompt')) || '');
 	notes = $state<Record<string, Note>>(load_notes());
 	active_note_id = $state(browser ? localStorage.getItem('active_note_id') || '' : '');
-	show_note = $state(browser && localStorage.getItem('show_note') !== 'false');
 	open_note_ids = $state<string[]>([]);
 
 	get active_note(): Note | undefined {
@@ -242,9 +241,6 @@ export class VoiceState {
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('active_note_id', this.active_note_id);
-		});
-		$effect(() => {
-			if (browser) localStorage.setItem('show_note', String(this.show_note));
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('open_note_ids', this.open_note_ids.join(','));
@@ -849,6 +845,7 @@ export class VoiceState {
 		const i = new_note_id();
 		this.notes = { ...this.notes, [i]: { i, t, b } };
 		this.active_note_id = i;
+		if (!this.open_note_ids.includes(i)) this.open_note_ids = [...this.open_note_ids, i];
 		this.qdrant_call('upsert', i, t, b);
 		return `Created note "${t}" (id: ${i}).`;
 	}

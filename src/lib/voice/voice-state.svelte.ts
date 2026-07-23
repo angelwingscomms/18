@@ -4,6 +4,7 @@ import { SvelteMap } from 'svelte/reactivity';
 import { get_tool_declarations, tool_handlers } from './gemini-live-dispatcher';
 import type { ChatMsg, Note } from './types';
 import { apply_edit } from './note_edit';
+import { reconcile_note, reconcile_tombstone } from './note_sync';
 import { play } from 'cuelume';
 import { model_options } from './types';
 
@@ -741,22 +742,24 @@ export class VoiceState {
 			for (const rn of data.notes as { i: string; t: string; b: string; u: number }[]) {
 				remote_ids.push(rn.i);
 				const local = this.notes[rn.i];
-				if (!local) {
+				const action = reconcile_note(local, rn);
+				if (action.type === 'create_local') {
 					const handle = this.new_note_handle();
 					this.notes = { ...this.notes, [rn.i]: { i: rn.i, n: handle, t: rn.t, b: rn.b, u: rn.u } };
 					if (!this.open_note_ids.includes(rn.i)) this.open_note_ids = [...this.open_note_ids, rn.i];
-				} else if (rn.u > (local.u || 0)) {
+				} else if (action.type === 'adopt_remote' && local) {
 					local.t = rn.t;
 					local.b = rn.b;
 					local.u = rn.u;
 					this.notes = { ...this.notes };
-				} else if ((local.u || 0) > rn.u) {
+				} else if (action.type === 'push_local' && local) {
 					this.qdrant_call('upsert', rn.i, local.t, local.b, local.u);
 				}
 			}
 			for (const tomb of (data.tombstones ?? []) as { i: string; u: number }[]) {
 				const local = this.notes[tomb.i];
-				if (local && Object.keys(this.notes).length > 1 && tomb.u > (local.u || 0)) {
+				const note_count = Object.keys(this.notes).length;
+				if (reconcile_tombstone(local, tomb.u, note_count) === 'remove_local') {
 					const { [tomb.i]: _drop, ...rest } = this.notes;
 					this.notes = rest;
 					this.open_note_ids = this.open_note_ids.filter((x) => x !== tomb.i);

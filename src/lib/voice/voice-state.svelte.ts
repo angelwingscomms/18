@@ -843,9 +843,9 @@ export class VoiceState {
 
 	add_note(t = 'Note', b = ''): string {
 		const i = new_note_id();
-		this.notes = { ...this.notes, [i]: { i, t, b } };
+		this.notes = { [i]: { i, t, b }, ...this.notes };
 		this.active_note_id = i;
-		if (!this.open_note_ids.includes(i)) this.open_note_ids = [...this.open_note_ids, i];
+		if (!this.open_note_ids.includes(i)) this.open_note_ids = [i, ...this.open_note_ids];
 		this.qdrant_call('upsert', i, t, b);
 		return `Created note "${t}" (id: ${i}).`;
 	}

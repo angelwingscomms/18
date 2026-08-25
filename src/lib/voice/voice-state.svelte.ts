@@ -325,12 +325,13 @@ export class VoiceState {
 		$effect(() => {
 			this.chat_messages.length;
 			if (!browser) return;
-			// persist locally always, plus remote when authed
-			if (this.active_chat_id && this.chats[this.active_chat_id]) {
-				this.chats[this.active_chat_id].m = [...this.chat_messages];
-				this.chats[this.active_chat_id].u = Date.now();
-				this.chats = { ...this.chats };
-			}
+			untrack(() => {
+				if (this.active_chat_id && this.chats[this.active_chat_id]) {
+					this.chats[this.active_chat_id].m = [...this.chat_messages];
+					this.chats[this.active_chat_id].u = Date.now();
+					this.chats = { ...this.chats };
+				}
+			});
 			if (!this._user_id) return;
 			if (this._chat_save_timer) clearTimeout(this._chat_save_timer);
 			this._chat_save_timer = setTimeout(() => {

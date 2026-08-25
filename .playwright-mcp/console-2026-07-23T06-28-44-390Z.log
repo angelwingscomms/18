@@ -1,0 +1,7 @@
+[  200295ms] [LOG] [voice] cleanup: starting @ http://localhost:1800/src/lib/voice/voice-state.svelte.ts:661
+[  200337ms] [WARNING] The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio @ http://localhost:1800/node_modules/.vite/deps/cuelume.js?v=e098c74c:389
+[  200337ms] [LOG] [voice] cleanup: done @ http://localhost:1800/src/lib/voice/voice-state.svelte.ts:661
+[  699401ms] [LOG] [voice] cleanup: starting @ http://localhost:1800/src/lib/voice/voice-state.svelte.ts?t=1784788324531:661
+[  699406ms] [LOG] [voice] cleanup: done @ http://localhost:1800/src/lib/voice/voice-state.svelte.ts?t=1784788324531:661
+[  710236ms] [LOG] [voice] cleanup: starting @ http://localhost:1800/src/lib/voice/voice-state.svelte.ts?t=1784788823643:651
+[  710237ms] [LOG] [voice] cleanup: done @ http://localhost:1800/src/lib/voice/voice-state.svelte.ts?t=1784788823643:651

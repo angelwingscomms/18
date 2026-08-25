@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import { getContext, setContext, untrack } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 import { get_tool_declarations, tool_handlers } from './gemini-live-dispatcher';
-import type { ChatMsg, Note } from './types';
+import type { Chat, ChatMsg, Note } from './types';
 import { apply_edit } from './note_edit';
 import { reconcile_note, reconcile_tombstone } from './note_sync';
 import { play } from 'cuelume';
@@ -10,6 +10,17 @@ import { model_options } from './types';
 
 function new_note_id() {
 	return crypto.randomUUID();
+}
+
+function load_chats_local(): Record<string, Chat> {
+	if (!browser) return {};
+	try {
+		const raw = localStorage.getItem('chats_local');
+		if (!raw) return {};
+		return JSON.parse(raw) as Record<string, Chat>;
+	} catch {
+		return {};
+	}
 }
 
 function load_notes(): Record<string, Note> {
@@ -113,6 +124,12 @@ export class VoiceState {
 
 	chat_messages = $state<ChatMsg[]>([]);
 	chat_queue = $state<{ text: string }[]>([]);
+	chats = $state<Record<string, Chat>>(load_chats_local());
+	active_chat_id = $state(browser ? localStorage.getItem('active_chat_id_chat') || '' : '');
+	chats_loaded = $state(false);
+	chat_search_q = $state('');
+	chat_search_hits = $state<any[]>([]);
+	_chat_save_timer: ReturnType<typeof setTimeout> | null = null;
 	chat_loading = $state(false);
 	chat_abort: AbortController | null = null;
 	chat_input = $state('');
@@ -298,6 +315,28 @@ export class VoiceState {
 			requestAnimationFrame(() => {
 				el.scrollTop = el.scrollHeight;
 			});
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('active_chat_id_chat', this.active_chat_id);
+		});
+		$effect(() => {
+			if (browser) localStorage.setItem('chats_local', JSON.stringify(this.chats));
+		});
+		$effect(() => {
+			this.chat_messages.length;
+			if (!browser) return;
+			// persist locally always, plus remote when authed
+			if (this.active_chat_id && this.chats[this.active_chat_id]) {
+				this.chats[this.active_chat_id].m = [...this.chat_messages];
+				this.chats[this.active_chat_id].u = Date.now();
+				this.chats = { ...this.chats };
+			}
+			if (!this._user_id) return;
+			if (this._chat_save_timer) clearTimeout(this._chat_save_timer);
+			this._chat_save_timer = setTimeout(() => {
+				this._chat_save_timer = null;
+				this.save_current_chat();
+			}, 800);
 		});
 	}
 
@@ -725,7 +764,10 @@ export class VoiceState {
 	set user_id(v: string) {
 		if (this._user_id === v) return;
 		this._user_id = v;
-		if (v) this.sync_from_qdrant();
+		if (v) {
+			this.sync_from_qdrant();
+			this.load_chats();
+		}
 	}
 
 	async sync_from_qdrant() {
@@ -1304,5 +1346,128 @@ export class VoiceState {
 		this.chat_queue = [];
 		this.chat_loading = false;
 		this.output_turn_active = false;
+		if (this.active_chat_id && this._user_id) {
+			this.chat_api('update', { i: this.active_chat_id, m: [], u: Date.now() });
+		}
+	}
+
+	async chat_api(a: string, extra: Record<string, unknown> = {}) {
+		if (!browser) return null;
+		try {
+			const res = await fetch('/api/chats', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ a, ...extra })
+			});
+			return await res.json();
+		} catch {
+			return null;
+		}
+	}
+
+	async load_chats() {
+		if (!this._user_id) return;
+		const data: any = await this.chat_api('list');
+		if (!data?.ok || !Array.isArray(data.chats)) return;
+		const dict: Record<string, Chat> = {};
+		for (const c of data.chats) dict[c.i] = { i: c.i, t: c.t || 'new chat', m: c.m || [], u: c.u || 0 };
+		// merge local chats not yet on server
+		for (const [id, local] of Object.entries(this.chats)) {
+			if (!dict[id]) {
+				dict[id] = local as Chat;
+				await this.chat_api('create', { i: local.i, t: local.t, m: local.m, u: local.u });
+			}
+		}
+		this.chats = dict;
+		this.chats_loaded = true;
+		if (!this.active_chat_id || !this.chats[this.active_chat_id]) {
+			const first = Object.values(dict).sort((x, y) => y.u - x.u)[0];
+			if (first) {
+				this.active_chat_id = first.i;
+				this.chat_messages = [...first.m];
+			}
+		}
+	}
+
+	async load_chat(id: string) {
+		const data: any = await this.chat_api('get', { i: id });
+		if (!data?.ok || !data.chat) return;
+		this.active_chat_id = data.chat.i;
+		this.chat_messages = [...(data.chat.m || [])];
+		this.chats[data.chat.i] = { i: data.chat.i, t: data.chat.t, m: data.chat.m || [], u: data.chat.u };
+		this.chats = { ...this.chats };
+	}
+
+	async save_current_chat() {
+		if (!this._user_id) return;
+		if (!this.active_chat_id) {
+			if (this.chat_messages.length === 0) return;
+			await this.new_chat();
+			return;
+		}
+		const title = this.chats[this.active_chat_id]?.t || this.derive_chat_title();
+		const u = Date.now();
+		if (this.chats[this.active_chat_id]) {
+			this.chats[this.active_chat_id].t = title;
+			this.chats[this.active_chat_id].m = [...this.chat_messages];
+			this.chats[this.active_chat_id].u = u;
+			this.chats = { ...this.chats };
+		}
+		await this.chat_api('update', { i: this.active_chat_id, t: title, m: this.chat_messages, u });
+	}
+
+	derive_chat_title(): string {
+		const first = this.chat_messages.find((m) => m.role === 'user' && m.content.trim());
+		if (!first) return 'new chat';
+		return first.content.trim().slice(0, 60).toLowerCase();
+	}
+
+	async new_chat() {
+		const id = crypto.randomUUID();
+		const title = this.derive_chat_title() || 'new chat';
+		const u = Date.now();
+		this.active_chat_id = id;
+		this.chat_messages = [];
+		this.chats[id] = { i: id, t: title, m: [], u };
+		this.chats = { ...this.chats };
+		if (this._user_id) {
+			await this.chat_api('create', { i: id, t: title, m: [], u });
+		}
+	}
+
+	async search_chats(q: string) {
+		if (!q.trim()) {
+			this.chat_search_hits = [];
+			this.chat_search_q = '';
+			return [];
+		}
+		this.chat_search_q = q;
+		const data: any = await this.chat_api('search', { q });
+		if (!data?.ok) {
+			this.chat_search_hits = [];
+			return [];
+		}
+		this.chat_search_hits = data.hits || [];
+		return this.chat_search_hits;
+	}
+
+	async resume_chat(id: string) {
+		await this.load_chat(id);
+	}
+
+	async delete_chat(id: string) {
+		if (!id || !this.chats[id]) return;
+		delete this.chats[id];
+		this.chats = { ...this.chats };
+		this.chat_search_hits = this.chat_search_hits.filter((h: any) => h.i !== id);
+		if (this.active_chat_id === id) {
+			const remaining = Object.values(this.chats).sort((a, b) => b.u - a.u)[0];
+			if (remaining) await this.load_chat(remaining.i);
+			else {
+				this.active_chat_id = '';
+				this.chat_messages = [];
+			}
+		}
+		if (this._user_id) await this.chat_api('delete', { i: id });
 	}
 }

@@ -1,0 +1,10 @@
+2026-08-25T18:31:03.126Z	data_model.chat_types	606c7fe
+2026-08-25T18:31:20.127Z	data_model.chat_store_qdrant	606c7fe
+2026-08-25T18:31:35.822Z	api.chats_route	606c7fe
+2026-08-25T18:31:45.445Z	api.chats_route_checks	606c7fe
+2026-08-25T18:32:32.067Z	client_state.voice_state_chats_store	606c7fe
+2026-08-25T18:32:58.046Z	client_state.voice_state_chat_search_resume	606c7fe
+2026-08-25T18:33:23.341Z	ui.chat_history_component	606c7fe
+2026-08-25T18:33:34.395Z	ui.chat_search_ui	606c7fe
+2026-08-25T18:33:59.698Z	ui.page_integration	606c7fe
+2026-08-25T18:34:32.596Z	ui.anonymous_fallback_and_live_context	606c7fe

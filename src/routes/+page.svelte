@@ -8,6 +8,7 @@
 	import SpeakerOffIcon from '$lib/components/icons/speaker-off-icon.svelte';
 	import XIcon from '$lib/components/icons/x-icon.svelte';
 	import ChatPanel from '$lib/components/chat/ChatPanel.svelte';
+	import ChatHistory from '$lib/components/chat/ChatHistory.svelte';
 	import NotePanel from '$lib/components/chat/NotePanel.svelte';
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 	import BinauralIcon from '$lib/components/icons/binaural-icon.svelte';
@@ -107,6 +108,7 @@
 		</header>
 
 		<main class="main">
+			<div class="col-history"><ChatHistory /></div>
 			<ChatPanel />
 			<NotePanel />
 		</main>
@@ -262,15 +264,17 @@
 		flex: 1;
 		display: grid;
 		grid-template-columns: 1fr;
-		grid-template-rows: 1fr 1fr;
+		grid-template-rows: auto 1fr 1fr;
 		gap: 1rem;
 		min-height: 0;
 		overflow: hidden;
 	}
 
+	.col-history { min-height: 0; overflow: hidden; }
+
 	@media (min-width: 768px) {
 		.main {
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 280px 1fr 1fr;
 			grid-template-rows: 1fr;
 		}
 	}

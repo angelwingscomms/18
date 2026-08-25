@@ -1,5 +1,20 @@
 export type ChatMsg = { role: 'user' | 'assistant'; content: string; images?: string[] };
 
+export interface Chat {
+	i: string;
+	t: string;
+	m: ChatMsg[];
+	u: number;
+	d?: 0 | 1;
+}
+
+export interface ChatSummary {
+	i: string;
+	t: string;
+	u: number;
+	preview: string;
+}
+
 export interface Note {
 	i: string;
 	n: string;

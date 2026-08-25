@@ -1,0 +1,86 @@
+{
+	"_": "stack: SvelteKit minimal + Cloudflare Workers (adapter-cloudflare), Svelte 5 runes ($state/$derived/$effect), TypeScript, Qdrant collection 'i' legacy, 'notes' for notes. single-letter payload keys per AGENTS.md. Chat types at src/lib/voice/types.ts. VoiceState at src/lib/voice/voice-state.svelte.ts holds chats in memory + localStorage for notes pattern. Auth via decode_session from src/lib/server/session.ts, cookies session, env bindings via $env/dynamic/private (QDRANT_URL, QDRANT_KEY, VOXELL_KEY). Embed via https://api.voxell.ai/v1/embeddings model jcorners/ingot-8b-r3 VECTOR_SIZE 4096. Conventions: snake_case vars, lowercase UI text, pnpm, no style blocks, Tailwind utilities. Traps: Qdrant client singleton reuse, collection must be ensured once (ensured flag), owns() check before writes, soft-delete tombstone pattern used for notes (d:1) — reuse for chats to allow sync. vector fallback to zeros on embed fail. local Map fallback exists for notes but not required for chats. browser guard needed for VoiceState. Plan must not break existing note sync.",
+	"data_model": {
+		"s": "chat persistence data model",
+		"d": 1,
+		"c": {
+			"chat_types": {
+				"s": "Outcome: Chat and ChatMsg types defined and shared between client/server. Decisions: 1) extend src/lib/voice/types.ts with Chat {i:string,t:string,m:ChatMsg[],u:number,d?:0|1} plus ChatSummary {i,t,u,preview}. Keep single-letter keys where stored (t title, m messages, u updated) but type field names stay readable. 2) ChatMsg already {role,content,images?}. Do not change it. 3) title auto-derived from first user message trimmed to 60 chars when not supplied. Fence: no API, no UI, only types.",
+				"d": 1,
+				"t": "grep -q \"interface Chat\" src/lib/voice/types.ts && grep -q \"ChatMsg\" src/lib/voice/types.ts && pnpm build 2>&1 | tail -n 5"
+			},
+			"chat_store_qdrant": {
+				"s": "Outcome: server helper ensures chats collection and shared constants ready. Decisions: 1) create src/lib/server/chats.ts (or inline helpers) exporting COL='chats', VECTOR_SIZE=4096, EMBED_MODEL='jcorners/ingot-8b-r3', ensure_collection(c), embed(env,text), owns(c,id,uid). Mirror src/routes/api/voice/qdrant/+server.ts pattern: get_client caching QdrantClient, ensured flag, vector size Cosine, fallback zero vector on embed failure via VOXELL_KEY. 2) payload shape {s:uid,t,bm?}: store s=uid, t=title, m=JSON stringified messages or direct array, u=updated, d=deleted flag. If payload array not supported, store m as JSON string. Executor picks smallest that round-trips via retrieve. 3) title+messages concatenated for embedding: `${t}\\n\\n${m.map(x=>x.content).join('\\n')}`. Fence: no route yet.",
+				"d": 1,
+				"v": "test -f src/lib/voice/types.ts",
+				"t": "test -f src/lib/server/chats.ts && grep -q \"COL.*chats\" src/lib/server/chats.ts && grep -q \"ensure_collection\" src/lib/server/chats.ts && pnpm build 2>&1 | tail -n 5"
+			}
+		}
+	},
+	"api": {
+		"s": "chats qdrant api",
+		"d": 1,
+		"c": {
+			"chats_route": {
+				"s": "Outcome: POST /api/chats handles all chat persistence with auth. Decisions: 1) file src/routes/api/chats/+server.ts, POST only, decode_session via cookies.get('session') + platform.env, 401 if !uid -> json {ok:false,e:'not authenticated'}. 2) body {a,i,t,m,u,q} where a in create|list|get|update|delete|search. 3) create: require or generate id via crypto.randomUUID(), embed, upsert with s=uid,d=0. list: scroll filter must s==uid && d==0 limit 999 return {ok:true,chats:[{i,t,m,u}]} sorted u desc. get: retrieve id, owns check, return chat. update: owns check, if m or t changed recompute vector else setPayload, update u. delete: soft-delete setPayload {d:1,u:Date.now()} (mirrors notes tombstone). search: embed q, c.search limit 20 filter s==uid && d==0 return hits [{i,t,preview,score}]. 4) wait:true on upsert/setPayload. Fence: no client wiring.",
+				"d": 1,
+				"v": "test -f src/lib/server/chats.ts",
+				"t": "test -f src/routes/api/chats/+server.ts && grep -q \"decode_session\" src/routes/api/chats/+server.ts && grep -q \"'create'\" src/routes/api/chats/+server.ts && grep -q \"'search'\" src/routes/api/chats/+server.ts && pnpm build 2>&1 | tail -n 5"
+			},
+			"chats_route_checks": {
+				"s": "Outcome: route rejects unauth, owns, and validates inputs. Decisions: 1) unauth returns json {ok:false} not throws. 2) every id-based action checks owns() before write. 3) validate a unknown -> {ok:false,e:'unknown action'}, missing id/q -> ok:false. 4) embed failure does not 500 but uses zero vector. Fence: no UI.",
+				"d": 1,
+				"v": "test -f src/routes/api/chats/+server.ts",
+				"t": "grep -q \"owns\" src/routes/api/chats/+server.ts && grep -q \"unknown action\" src/routes/api/chats/+server.ts && pnpm build 2>&1 | tail -n 5"
+			}
+		}
+	},
+	"client_state": {
+		"s": "VoiceState chat persistence",
+		"d": 1,
+		"c": {
+			"voice_state_chats_store": {
+				"s": "Outcome: VoiceState persists chat_messages to DB and can resume. Decisions: 1) file src/lib/voice/voice-state.svelte.ts: add fields chats = $state<Record<string,Chat>>({}), active_chat_id = $state<string>(''), chats_loaded = $state(false), chat_search_q = $state(''), chat_search_hits = $state<any[]>([]). Reuse Chat type from $lib/voice/types. 2) on user_id setter already calls sync_from_qdrant for notes — also call load_chats() when _user_id set. load_chats fetches POST /api/chats {a:'list'} and populates this.chats; if empty keeps current chat_messages as local only. 3) new_chat(): generate id crypto.randomUUID(), title from first 60 chars or 'New chat', empty m, u=Date.now(), set active_chat_id, clear chat_messages, call qdrant chat create. 4) save_current_chat debounced 800ms on every chat_messages change ( $effect tracking chat_messages.length ): if _user_id and active_chat_id then POST {a:'update',i:active_chat_id,m:chat_messages,t:title,u:Date.now()} — if no active_chat_id, auto-create. 5) load_chat(id): fetch {a:'get',i:id} -> set active_chat_id and chat_messages = returned m. 6) apply same browser guard pattern as notes. Fence: no search, no UI.",
+				"d": 1,
+				"v": "test -f src/lib/voice/voice-state.svelte.ts",
+				"t": "grep -q \"active_chat_id\" src/lib/voice/voice-state.svelte.ts && grep -q \"load_chats\" src/lib/voice/voice-state.svelte.ts && grep -q \"new_chat\" src/lib/voice/voice-state.svelte.ts && pnpm build 2>&1 | tail -n 5"
+			},
+			"voice_state_chat_search_resume": {
+				"s": "Outcome: VoiceState can search chats and resume with context. Decisions: 1) add method search_chats(q:string) -> POST {a:'search',q} store hits in chat_search_hits, returns string for tool or UI. 2) resume_chat(id) loads full chat, sets active_chat_id, hydrates chat_messages, and if live session active, ensures next connectLive includes CONTEXT block from chats (extend existing msgs slice logic to include resumed chat history). 3) delete_chat(id) -> POST {a:'delete',i:id} remove from this.chats, if active then new_chat or clear. 4) persist active_chat_id to localStorage key 'active_chat_id' like notes do, read browser localStorage.getItem on init. 5) On chat_messages clearChat also clears DB if user authed — call delete or update empty. Fence: visual work stays in next group.",
+				"d": 1,
+				"v": "grep -q \"active_chat_id\" src/lib/voice/voice-state.svelte.ts",
+				"t": "grep -q \"search_chats\" src/lib/voice/voice-state.svelte.ts && grep -q \"load_chat\" src/lib/voice/voice-state.svelte.ts && pnpm build 2>&1 | tail -n 5"
+			}
+		}
+	},
+	"ui": {
+		"s": "chat ui: create, list, search, resume",
+		"d": 1,
+		"c": {
+			"chat_history_component": {
+				"s": "Outcome: user sees chat history and can create/resume chats. Decisions: 1) create src/lib/components/chat/ChatHistory.svelte (or extend ChatPanel.svelte). Displays: 'new chat' button on top, list of chats from v.chats sorted by u desc, each row shows title + preview (first msg 60 chars) + date, click resumes, delete x. 2) ChatPanel.svelte already shows messages; integrate history above or beside: add left pane 260px on desktop, drawer on mobile. Reuse VoiceState via get_voice_state(). 3) new chat button calls v.new_chat(). 4) click row calls v.load_chat(id) or v.resume_chat(id). 5) keep existing chat input/send logic untouched. Styles match existing chat-panel: rgba(20,20,20,0.6), border 1px solid rgba(255,255,255,0.06), lowercase text. Fence: search bar in next step.",
+				"d": 1,
+				"v": "test -f src/lib/components/chat/ChatPanel.svelte",
+				"t": "test -f src/lib/components/chat/ChatHistory.svelte && grep -q \"new_chat\" src/lib/components/chat/ChatHistory.svelte && grep -q \"get_voice_state\" src/lib/components/chat/ChatHistory.svelte && pnpm build 2>&1 | tail -n 5"
+			},
+			"chat_search_ui": {
+				"s": "Outcome: user can search chats semantically. Decisions: 1) ChatHistory.svelte adds search input (placeholder 'search chats...') bound to v.chat_search_q, debounce 300ms calls v.search_chats(q) and shows hits below list or filters list when hits exist. 2) When q empty, show full list sorted by u; when q non-empty and hits returned, show hits with score preview. 3) search uses same POST /api/chats {a:'search',q}. 4) No separate page — inline. 5) Clear search button resets to list. Fence: no backend change.",
+				"d": 1,
+				"v": "test -f src/lib/components/chat/ChatHistory.svelte",
+				"t": "grep -q \"search\" src/lib/components/chat/ChatHistory.svelte && grep -q \"chat_search\" src/lib/components/chat/ChatHistory.svelte && pnpm build 2>&1 | tail -n 5"
+			},
+			"page_integration": {
+				"s": "Outcome: +page.svelte wires history + chat + notes in one responsive layout. Decisions: 1) file src/routes/+page.svelte currently renders header + ChatPanel + NotePanel side-by-side. Change to: on desktop 3-col or 2-col with history collapsible (history 280px, chat flex 1, notes flex 1). On mobile stack vertically. 2) Import ChatHistory.svelte and place beside ChatPanel inside main. 3) Gate check: ChatHistory text appears in built HTML. Smallest CSS change using existing .app/.main flex. 4) Ensure anonymous users still see history (local only) without errors — VoiceState load_chats no-ops when !user_id. Trap: do not break binaural/voice controls.",
+				"d": 1,
+				"v": "test -f src/routes/+page.svelte",
+				"t": "grep -q \"ChatHistory\" src/routes/+page.svelte && pnpm build 2>&1 | tail -n 5"
+			},
+			"anonymous_fallback_and_live_context": {
+				"s": "Outcome: chats work logged out and resume injects into Gemini live context. Decisions: 1) anonymous fallback: when !user_id, VoiceState keeps chats in memory + localStorage key 'chats_local' (mirroring notes localStorage pattern) so create/list/resume still work; on login, merge local chats to server via upsert loop once. 2) live context: in connectLive the initial CONTEXT block already includes last 20 chat_messages — after resume, same block naturally includes resumed history, so no extra change except ensure save_current_chat runs before reconnect. Verify by checking that after load_chat the chat_messages are the source of truth for context. 3) clearChat behavior: if active_chat_id exists, update DB with empty array instead of deleting to keep title.",
+				"d": 1,
+				"v": "test -f src/lib/voice/voice-state.svelte.ts",
+				"t": "grep -q \"chats_local\" src/lib/voice/voice-state.svelte.ts && grep -q \"chat_messages\" src/lib/voice/voice-state.svelte.ts && pnpm build 2>&1 | tail -n 5"
+			}
+		}
+	}
+}

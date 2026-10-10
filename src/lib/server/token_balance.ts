@@ -21,8 +21,6 @@ async function client(env: Env): Promise<QdrantClient> {
 	return q;
 }
 
-const ZV: number[] = new Array(3072).fill(0);
-
 async function read_user(user_id: string, env: Env): Promise<{ bal: number; daily: number }> {
 	const pid = id_to_uuid(user_id);
 	try {
@@ -40,7 +38,7 @@ async function write_user(user_id: string, bal: number, daily: number, env: Env)
 	local.set(user_id, bal);
 	local_daily.set(user_id, daily);
 	const c = await client(env);
-	await c.upsert(C, { points: [{ id: pid, vector: ZV, payload: { t: bal, u: user_id, d: daily } }] });
+	await c.upsert(C, { points: [{ id: pid, vector: {}, payload: { t: bal, u: user_id, d: daily } }] });
 }
 
 async function write_bal(user_id: string, n: number, env: Env): Promise<void> {

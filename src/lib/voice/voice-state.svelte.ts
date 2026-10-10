@@ -116,6 +116,12 @@ export class VoiceState {
 	tool_call_pending = false;
 	goaway_received = false;
 	reconnecting = $state(false);
+	live_wanted = false;
+	pending_reconnect = false;
+	session_gen = 0;
+	applied_live_cfg = '';
+	last_open_at = 0;
+	fail_streak = 0;
 	prompt_reconnect_timer: ReturnType<typeof setTimeout> | null = null;
 	session_resumption_handle: string | null = null;
 	_user_id = '';
@@ -269,25 +275,18 @@ export class VoiceState {
 			if (browser) localStorage.setItem('groq_key', this.groq_key);
 		});
 		$effect(() => {
-			this.system_prompt;
+			const cfg = this.live_cfg();
+			const applied = untrack(() => this.applied_live_cfg);
 			if (this.prompt_reconnect_timer) {
 				clearTimeout(this.prompt_reconnect_timer);
 				this.prompt_reconnect_timer = null;
 			}
-			if (this.gemini_live_session) {
-				this.prompt_reconnect_timer = setTimeout(() => {
-					this.prompt_reconnect_timer = null;
-					this.trigger_reconnect();
-				}, 5400);
-			}
-		});
-		$effect(() => {
-			if (this.show_binaural_settings) return;
-			if (this.prompt_reconnect_timer) {
-				clearTimeout(this.prompt_reconnect_timer);
+			if (!applied || cfg === applied) return;
+			this.prompt_reconnect_timer = setTimeout(() => {
 				this.prompt_reconnect_timer = null;
-			}
-			untrack(() => this.trigger_reconnect());
+				if (!this.live_wanted) return;
+				if (cfg !== this.applied_live_cfg) this.trigger_reconnect();
+			}, 1200);
 		});
 		$effect(() => {
 			if (browser) localStorage.setItem('notes', JSON.stringify(this.notes));
@@ -354,33 +353,21 @@ export class VoiceState {
 	cleanup() {
 		if (this.gemini_live_closing) return;
 		this.log('cleanup: starting');
+		this.live_wanted = false;
+		this.session_gen++;
 		this.gemini_live_closing = true;
 		this.gemini_live_healthy = false;
 		this.recording = false;
+		this.connecting = false;
+		this.reconnecting = false;
+		this.pending_reconnect = false;
+		if (this.prompt_reconnect_timer) {
+			clearTimeout(this.prompt_reconnect_timer);
+			this.prompt_reconnect_timer = null;
+		}
 
 		this.interrupt_audio();
-
-		if (this.gemini_live_processor) {
-			this.gemini_live_processor.onaudioprocess = null;
-			this.gemini_live_processor.disconnect();
-			this.gemini_live_processor = null;
-		}
-
-		if (this.gemini_live_voice_gain) {
-			this.gemini_live_voice_gain.disconnect();
-			this.gemini_live_voice_gain = null;
-		}
-
-		if (this.rnnoise_node) {
-			(this.rnnoise_node as any).destroy?.();
-			this.rnnoise_node.disconnect();
-			this.rnnoise_node = null;
-		}
-
-		if (this.gemini_live_mic_stream) {
-			this.gemini_live_mic_stream.getTracks().forEach((t) => t.stop());
-			this.gemini_live_mic_stream = null;
-		}
+		this.drop_audio_graph();
 
 		const session = this.gemini_live_session;
 		this.gemini_live_session = null;
@@ -390,22 +377,41 @@ export class VoiceState {
 			} catch {}
 		}
 
+		this.chat_loading = false;
+		play('droplet');
+		this.log('cleanup: done');
+	}
+
+	drop_audio_graph() {
+		if (this.gemini_live_processor) {
+			this.gemini_live_processor.onaudioprocess = null;
+			this.gemini_live_processor.disconnect();
+			this.gemini_live_processor = null;
+		}
+		if (this.gemini_live_voice_gain) {
+			this.gemini_live_voice_gain.disconnect();
+			this.gemini_live_voice_gain = null;
+		}
+		if (this.rnnoise_node) {
+			(this.rnnoise_node as any).destroy?.();
+			this.rnnoise_node.disconnect();
+			this.rnnoise_node = null;
+		}
+		if (this.gemini_live_mic_stream) {
+			this.gemini_live_mic_stream.getTracks().forEach((t) => t.stop());
+			this.gemini_live_mic_stream = null;
+		}
 		if (this.gemini_live_audio_gain) {
 			this.gemini_live_audio_gain.disconnect();
 			this.gemini_live_audio_gain = null;
 		}
-
 		if (this.gemini_live_audio_ctx) {
 			this.gemini_live_audio_ctx.close();
 			this.gemini_live_audio_ctx = null;
 		}
-
 		this.gemini_live_audio_queue = [];
 		this.gemini_live_audio_playing = false;
 		this.gemini_live_current_source = null;
-		this.chat_loading = false;
-		play('droplet');
-		this.log('cleanup: done');
 	}
 
 	toggleMicMute() {
@@ -523,19 +529,34 @@ export class VoiceState {
 
 	stop_thinking_sound() {}
 
+	live_cfg() {
+		return [
+			this.model,
+			this.voice_name,
+			this.noise_suppression,
+			this.system_prompt,
+			this.gemini_key
+		].join('\x1f');
+	}
+
 	async toggleVoiceChat() {
-		if (this.gemini_live_session) {
+		if (this.live_wanted || this.gemini_live_session || this.connecting || this.reconnecting) {
+			this.live_wanted = false;
 			this.cleanup();
 			return;
 		}
+		this.live_wanted = true;
 		this.gemini_live_closing = false;
 		this.goaway_received = false;
+		this.fail_streak = 0;
+		this.pending_reconnect = false;
 		await this.connectLive();
 	}
 
 	async connectLive() {
 		if (this.connecting) return;
 		this.connecting = true;
+		const gen = ++this.session_gen;
 		try {
 			this.add_toast('Connecting voice...');
 			let key = this.gemini_key;
@@ -547,9 +568,13 @@ export class VoiceState {
 			if (!key) throw new Error('No API key available');
 
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-			this.gemini_live_mic_stream = stream;
-
 			const audioCtx = new AudioContext();
+			if (gen !== this.session_gen || !this.live_wanted) {
+				stream.getTracks().forEach((t) => t.stop());
+				audioCtx.close();
+				return;
+			}
+			this.gemini_live_mic_stream = stream;
 			this.gemini_live_audio_ctx = audioCtx;
 			const outputGain = audioCtx.createGain();
 			outputGain.gain.value = this.audio_muted || this.quiet_mode ? 0 : 1;
@@ -579,6 +604,10 @@ export class VoiceState {
 					processorSource = audioCtx.createMediaStreamSource(intermediateDest.stream);
 				} catch {}
 			}
+			if (gen !== this.session_gen || !this.live_wanted) {
+				if (this.gemini_live_audio_ctx === audioCtx) this.drop_audio_graph();
+				return;
+			}
 
 			const voiceGain = audioCtx.createGain();
 			voiceGain.gain.value = this.voice_gain;
@@ -593,6 +622,10 @@ export class VoiceState {
 			processor.connect(micGain);
 			micGain.connect(audioCtx.destination);
 			this.gemini_live_processor = processor;
+			if (gen !== this.session_gen || !this.live_wanted) {
+				if (this.gemini_live_audio_ctx === audioCtx) this.drop_audio_graph();
+				return;
+			}
 
 			const { GoogleGenAI } = await import('@google/genai');
 			const ai = new GoogleGenAI({ apiKey: key, httpOptions: { apiVersion: 'v1alpha' } });
@@ -601,8 +634,12 @@ export class VoiceState {
 				model: this.model,
 				callbacks: {
 					onopen: () => {
+						if (gen !== this.session_gen) return;
 						this.gemini_live_healthy = true;
 						this.recording = true;
+						this.last_open_at = Date.now();
+						this.fail_streak = 0;
+						this.applied_live_cfg = this.live_cfg();
 						if ('mediaSession' in navigator) {
 							try {
 								navigator.mediaSession.setActionHandler('play', () => this.toggleMicMute());
@@ -615,9 +652,11 @@ export class VoiceState {
 						}
 					},
 					onmessage: (msg: any) => {
+						if (gen !== this.session_gen) return;
 						this.gemini_live_handle(msg);
 					},
 					onerror: (e: any) => {
+						if (gen !== this.session_gen) return;
 						this.log(
 							'onerror code=' +
 								e?.code +
@@ -631,6 +670,7 @@ export class VoiceState {
 						this.handle_disconnect('error');
 					},
 					onclose: (e?: any) => {
+						if (gen !== this.session_gen) return;
 						this.log(
 							'onclose code=' + e?.code + ' reason="' + e?.reason + '" wasClean=' + e?.wasClean
 						);
@@ -658,6 +698,13 @@ export class VoiceState {
 						: {}
 				} as any
 			});
+			if (gen !== this.session_gen || !this.live_wanted) {
+				try {
+					session.close();
+				} catch {}
+				if (this.gemini_live_audio_ctx === audioCtx) this.drop_audio_graph();
+				return;
+			}
 			this.gemini_live_session = session;
 			const msgs = this.chat_messages.filter((m) => m.content);
 			const initial =
@@ -671,6 +718,7 @@ export class VoiceState {
 				session.sendRealtimeInput({ text: initial });
 			} catch {}
 		} catch (e) {
+			if (gen !== this.session_gen) throw e;
 			if (e instanceof DOMException && e.name === 'NotFoundError') {
 				try {
 					const devices = await navigator.mediaDevices.enumerateDevices();
@@ -687,20 +735,31 @@ export class VoiceState {
 			} else {
 				this.add_toast('Voice setup error: ' + (e instanceof Error ? e.message : String(e)), 'e');
 			}
+			this.live_wanted = false;
 			this.cleanup();
 			throw e;
 		} finally {
-			this.connecting = false;
+			if (gen === this.session_gen) {
+				this.connecting = false;
+				if (this.pending_reconnect) {
+					this.pending_reconnect = false;
+					this.trigger_reconnect();
+				}
+			}
 		}
 	}
 
-	handle_disconnect(reason: string) {
+	handle_disconnect(_reason: string) {
+		if (this.connecting) {
+			this.pending_reconnect = true;
+			return;
+		}
 		this.trigger_reconnect();
 	}
 
 	trigger_reconnect() {
-		if (this.gemini_live_closing || this.reconnecting || this.connecting) return;
-		if (!this.gemini_live_session) return;
+		if (!this.live_wanted || this.gemini_live_closing || this.reconnecting || this.connecting)
+			return;
 		this.reconnecting = true;
 		this.gemini_live_healthy = false;
 		this.recording = false;
@@ -710,39 +769,11 @@ export class VoiceState {
 
 	async auto_reconnect() {
 		this.interrupt_audio();
-
-		if (this.gemini_live_processor) {
-			this.gemini_live_processor.onaudioprocess = null;
-			this.gemini_live_processor.disconnect();
-			this.gemini_live_processor = null;
-		}
-		if (this.gemini_live_voice_gain) {
-			this.gemini_live_voice_gain.disconnect();
-			this.gemini_live_voice_gain = null;
-		}
-		if (this.rnnoise_node) {
-			(this.rnnoise_node as any).destroy?.();
-			this.rnnoise_node.disconnect();
-			this.rnnoise_node = null;
-		}
-		if (this.gemini_live_mic_stream) {
-			this.gemini_live_mic_stream.getTracks().forEach((t) => t.stop());
-			this.gemini_live_mic_stream = null;
-		}
-		if (this.gemini_live_audio_gain) {
-			this.gemini_live_audio_gain.disconnect();
-			this.gemini_live_audio_gain = null;
-		}
-		if (this.gemini_live_audio_ctx) {
-			await this.gemini_live_audio_ctx.close();
-			this.gemini_live_audio_ctx = null;
-		}
-		this.gemini_live_audio_queue = [];
-		this.gemini_live_audio_playing = false;
-		this.gemini_live_current_source = null;
+		this.drop_audio_graph();
 
 		const session = this.gemini_live_session;
 		this.gemini_live_session = null;
+		this.session_gen++;
 		if (session) {
 			try {
 				session.close();
@@ -752,9 +783,26 @@ export class VoiceState {
 		this.gemini_live_closing = false;
 		this.goaway_received = false;
 
+		const lived = this.last_open_at ? Date.now() - this.last_open_at : 0;
+		this.fail_streak = lived > 15000 ? 1 : this.fail_streak + 1;
+		if (this.fail_streak > 5) {
+			this.add_toast('Voice dropped — tap the mic to retry', 'e');
+			this.live_wanted = false;
+			this.reconnecting = false;
+			this.cleanup();
+			return;
+		}
+		const wait = this.fail_streak <= 1 ? 0 : Math.min(8000, 400 * 2 ** (this.fail_streak - 2));
+		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+		if (!this.live_wanted) {
+			this.reconnecting = false;
+			return;
+		}
+
 		try {
 			await this.connectLive();
 		} catch {
+			if (!this.live_wanted) return;
 			this.add_toast('Reconnect failed', 'e');
 			this.cleanup();
 		} finally {
@@ -789,7 +837,8 @@ export class VoiceState {
 				if (action.type === 'create_local') {
 					const handle = this.new_note_handle();
 					this.notes = { ...this.notes, [rn.i]: { i: rn.i, n: handle, t: rn.t, b: rn.b, u: rn.u } };
-					if (!this.open_note_ids.includes(rn.i)) this.open_note_ids = [...this.open_note_ids, rn.i];
+					if (!this.open_note_ids.includes(rn.i))
+						this.open_note_ids = [...this.open_note_ids, rn.i];
 				} else if (action.type === 'adopt_remote' && local) {
 					local.t = rn.t;
 					local.b = rn.b;
@@ -806,7 +855,8 @@ export class VoiceState {
 					const { [tomb.i]: _drop, ...rest } = this.notes;
 					this.notes = rest;
 					this.open_note_ids = this.open_note_ids.filter((x) => x !== tomb.i);
-					if (this.active_note_id === tomb.i) this.active_note_id = Object.values(this.notes)[0]?.i ?? '';
+					if (this.active_note_id === tomb.i)
+						this.active_note_id = Object.values(this.notes)[0]?.i ?? '';
 				}
 			}
 			for (const [id, note] of Object.entries(this.notes)) {
@@ -1322,7 +1372,8 @@ export class VoiceState {
 				const data = img.split(',')[1];
 				parts.push({ media: { data, mimeType: mime } });
 			}
-			if (t) parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${send_text}` : send_text });
+			if (t)
+				parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${send_text}` : send_text });
 			for (const p of parts) {
 				this.gemini_live_session.sendRealtimeInput(p);
 			}
@@ -1371,7 +1422,8 @@ export class VoiceState {
 		const data: any = await this.chat_api('list');
 		if (!data?.ok || !Array.isArray(data.chats)) return;
 		const dict: Record<string, Chat> = {};
-		for (const c of data.chats) dict[c.i] = { i: c.i, t: c.t || 'new chat', m: c.m || [], u: c.u || 0 };
+		for (const c of data.chats)
+			dict[c.i] = { i: c.i, t: c.t || 'new chat', m: c.m || [], u: c.u || 0 };
 		// merge local chats not yet on server
 		for (const [id, local] of Object.entries(this.chats)) {
 			if (!dict[id]) {
@@ -1395,7 +1447,12 @@ export class VoiceState {
 		if (!data?.ok || !data.chat) return;
 		this.active_chat_id = data.chat.i;
 		this.chat_messages = [...(data.chat.m || [])];
-		this.chats[data.chat.i] = { i: data.chat.i, t: data.chat.t, m: data.chat.m || [], u: data.chat.u };
+		this.chats[data.chat.i] = {
+			i: data.chat.i,
+			t: data.chat.t,
+			m: data.chat.m || [],
+			u: data.chat.u
+		};
 		this.chats = { ...this.chats };
 	}
 

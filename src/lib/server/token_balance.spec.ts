@@ -60,10 +60,13 @@ describe('token balance daily credit', () => {
 		const { load } = await import('../../routes/+layout.server');
 		const { get_balance } = await import('./token_balance');
 		const platform = { env: env() };
-		const result = await load({
+		const result = (await load({
 			cookies: { get: (n: string) => (n === 'session' ? SESSION : undefined) },
 			platform
-		} as unknown as Parameters<typeof load>[0]);
+		} as unknown as Parameters<typeof load>[0])) as {
+			user: { id: string; name: string } | null;
+			balance: number;
+		};
 		const helper = await get_balance({ platform }, USER_ID, platform.env as unknown as Env);
 		return { result, helper };
 	}

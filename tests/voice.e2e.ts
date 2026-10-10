@@ -38,16 +38,17 @@ test.beforeEach(async ({ app, browser }) => {
 	await app.open('/');
 });
 
-test('text input appears after voice setup and preserves its draft across stops', async ({
+test('text input stays visible and preserves its draft across voice start and stop', async ({
 	browser
 }) => {
 	await expect(browser.locator('.record-btn')).toBeVisible();
-	await expect(browser.locator('.chat-input-row')).toBeHidden();
+	await expect(browser.locator('.chat-input-row')).toBeVisible();
+	await browser.locator('.chat-input-row textarea').fill('keep this draft');
 	await browser.locator('.record-btn').click();
 	await expect
 		.poll(() => browser.evaluate(() => Reflect.get(window, 'voice_socket')?.readyState))
 		.toBe(1);
-	await expect(browser.locator('.chat-input-row')).toBeHidden();
+	await expect(browser.locator('.chat-input-row textarea')).toHaveValue('keep this draft');
 	await browser.evaluate(() => {
 		Reflect.get(window, 'voice_socket').onmessage(
 			new MessageEvent('message', {
@@ -57,9 +58,9 @@ test('text input appears after voice setup and preserves its draft across stops'
 		return true;
 	});
 	await expect(browser.locator('.chat-input-row')).toBeVisible();
-	await browser.locator('.chat-input-row textarea').fill('keep this draft');
+	await expect(browser.locator('.chat-input-row textarea')).toHaveValue('keep this draft');
 	await browser.locator('.record-btn').click();
-	await expect(browser.locator('.chat-input-row')).toBeHidden();
+	await expect(browser.locator('.chat-input-row textarea')).toHaveValue('keep this draft');
 	await browser.locator('.record-btn').click();
 	await expect.poll(() => browser.evaluate(() => Reflect.get(window, 'voice_connections'))).toBe(2);
 	await browser.evaluate(() => {
@@ -90,7 +91,7 @@ test('authentication rejection ends voice without reconnecting', async ({ browse
 		);
 		return true;
 	});
-	await expect(browser.locator('.chat-input-row')).toBeHidden();
+	await expect(browser.locator('.chat-input-row')).toBeVisible();
 	await expect(browser.locator('body')).toContainText('voice authentication failed');
 	await browser.evaluate(() => new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 1000)));
 	expect(await browser.evaluate(() => Reflect.get(window, 'voice_connections'))).toBe(1);

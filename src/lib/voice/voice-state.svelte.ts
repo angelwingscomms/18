@@ -384,7 +384,7 @@ export class VoiceState {
 			} catch {}
 		}
 
-		this.chat_loading = false;
+		this.stopChat();
 		play('droplet');
 		this.log('cleanup: done');
 	}
@@ -554,6 +554,7 @@ export class VoiceState {
 			this.cleanup();
 			return;
 		}
+		this.stopChat();
 		this.live_wanted = true;
 		this.gemini_live_closing = false;
 		this.goaway_received = false;
@@ -1415,14 +1416,15 @@ export class VoiceState {
 
 	async sendChatMessage(text: string, hidden_prefix?: string) {
 		if (!text.trim() && this.pending_images.length === 0) return;
-		if (!this.gemini_live_can_send()) {
-			this.add_toast('Start voice chat first to send messages', 'e');
-			return;
-		}
 		const t = text.trim();
 		const send_text = this.quiet_mode ? `quiet mode on. ${t}` : t;
-		const imgs = this.pending_images;
-		this.pending_images = [];
+		const live = this.live_wanted || this.recording || this.gemini_live_can_send();
+		const imgs = live ? this.pending_images : [];
+		if (!live && this.pending_images.length) {
+			this.add_toast('images send when voice is on', 'e');
+			if (!t) return;
+		}
+		this.pending_images = live ? [] : this.pending_images;
 		this.chat_input = '';
 		if (this.chat_input_ref) this.chat_input_ref.style.height = 'auto';
 		this.output_turn_active = false;
@@ -1430,20 +1432,69 @@ export class VoiceState {
 			...this.chat_messages,
 			{ role: 'user', content: t || '(image)', images: imgs.length ? imgs : undefined }
 		];
+		if (live) {
+			if (!this.gemini_live_can_send()) return;
+			try {
+				const parts: Record<string, unknown>[] = [];
+				for (const img of imgs) {
+					const mime = img.split(';')[0].split(':')[1];
+					const data = img.split(',')[1];
+					parts.push({ media: { data, mimeType: mime } });
+				}
+				if (t)
+					parts.push({
+						text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${send_text}` : send_text
+					});
+				for (const p of parts) {
+					if (!this.gemini_live_can_send()) break;
+					this.gemini_live_session.sendRealtimeInput(p);
+				}
+			} catch {}
+			return;
+		}
+		await this.send_text_chat(hidden_prefix);
+	}
+
+	async send_text_chat(hidden_prefix?: string) {
+		this.stopChat();
+		this.chat_loading = true;
+		this.chat_abort = new AbortController();
+		const ac = this.chat_abort;
+		this.chat_messages = [...this.chat_messages, { role: 'assistant', content: '' }];
 		try {
-			const parts: Record<string, unknown>[] = [];
-			for (const img of imgs) {
-				const mime = img.split(';')[0].split(':')[1];
-				const data = img.split(',')[1];
-				parts.push({ media: { data, mimeType: mime } });
+			const history = this.chat_messages
+				.filter((m) => m.role === 'user' || (m.role === 'assistant' && m.content))
+				.map((m) => ({ role: m.role, content: m.content }));
+			if (hidden_prefix && history.length) {
+				const last = history[history.length - 1];
+				if (last.role === 'user') last.content = `${hidden_prefix}\n\nUser: ${last.content}`;
 			}
-			if (t)
-				parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${send_text}` : send_text });
-			for (const p of parts) {
-				if (!this.gemini_live_can_send()) break;
-				this.gemini_live_session.sendRealtimeInput(p);
+			const res = await fetch('/api/chat', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					m: history,
+					s: `${this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS}\n\n${this.notes_context_block()}`,
+					k: this.groq_key.trim() || undefined
+				}),
+				signal: ac.signal
+			});
+			const d = (await res.json()) as { t?: string; e?: string };
+			if (ac !== this.chat_abort) return;
+			if (!res.ok || !d.t) throw new Error(d.e || 'text chat unavailable');
+			const msgs = [...this.chat_messages];
+			msgs[msgs.length - 1] = { role: 'assistant', content: d.t };
+			this.chat_messages = msgs;
+		} catch (e) {
+			if (ac !== this.chat_abort || (e instanceof DOMException && e.name === 'AbortError')) return;
+			this.chat_messages = this.chat_messages.slice(0, -1);
+			this.add_toast(e instanceof Error ? e.message : 'text chat unavailable', 'e');
+		} finally {
+			if (ac === this.chat_abort) {
+				this.chat_abort = null;
+				this.chat_loading = false;
 			}
-		} catch {}
+		}
 	}
 
 	async sendChatMessageWithDeepSearch(text: string) {

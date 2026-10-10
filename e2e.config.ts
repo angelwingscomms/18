@@ -6,7 +6,7 @@ export default {
 		{
 			engine: web(),
 			app: {
-				url: process.env.APP_URL ?? 'http://localhost:1800',
+				url: process.env.APP_URL ?? 'http://[::1]:1800',
 				command: {
 					executable: 'pnpm',
 					args: ['run', 'dev'],

@@ -70,7 +70,6 @@
 			</div>
 		{/each}
 	</div>
-	{#if v.recording}
 	<div data-mi class="chat-input-row">
 		{#if v.pending_images.length > 0}
 			<div class="pending-imgs">
@@ -105,17 +104,18 @@
 			></textarea>
 			<button
 				onclick={() => v.sendChatMessage(v.chat_input)}
-				disabled={!v.chat_input.trim() && v.pending_images.length === 0}
+				disabled={v.chat_loading || (!v.chat_input.trim() && v.pending_images.length === 0)}
 				class="send-btn"
 			>→</button>
+			{#if v.recording}
 			<button
 				onclick={() => v.sendChatMessageWithDeepSearch(v.chat_input)}
 				disabled={!v.chat_input.trim() && v.pending_images.length === 0}
 				class="deep-btn"
 			>🔍 Deep</button>
+			{/if}
 		</div>
 	</div>
-	{/if}
 </div>
 
 <style>

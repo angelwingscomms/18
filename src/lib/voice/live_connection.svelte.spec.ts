@@ -227,6 +227,23 @@ describe('voice connection lifecycle', () => {
 		expect(v.reconnecting).toBe(true);
 	});
 
+	it('uses groq text chat when voice is off', async () => {
+		const v = make();
+		v.live_wanted = false;
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ t: 'groq hi' }));
+		await v.sendChatMessage('hello');
+		expect(v.chat_messages).toEqual([
+			{ role: 'user', content: 'hello' },
+			{ role: 'assistant', content: 'groq hi' }
+		]);
+		const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+			string,
+			RequestInit
+		];
+		expect(url).toBe('/api/chat');
+		expect(JSON.parse(init.body as string).m.at(-1)).toEqual({ role: 'user', content: 'hello' });
+	});
+
 	it('ends a failed token request without opening a socket', async () => {
 		const v = make();
 		v.gemini_key = '';

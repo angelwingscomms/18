@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { marked } from 'marked';
-	import { get_voice_state } from '$lib/voice/voice-state.svelte.ts';
+	import { get_voice_state } from '$lib/voice/voice-state.svelte';
 
 	const v = get_voice_state();
 
@@ -70,6 +70,7 @@
 			</div>
 		{/each}
 	</div>
+	{#if v.recording}
 	<div data-mi class="chat-input-row">
 		{#if v.pending_images.length > 0}
 			<div class="pending-imgs">
@@ -114,6 +115,7 @@
 			>🔍 Deep</button>
 		</div>
 	</div>
+	{/if}
 </div>
 
 <style>

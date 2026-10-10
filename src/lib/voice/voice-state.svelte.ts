@@ -122,6 +122,8 @@ export class VoiceState {
 	applied_live_cfg = '';
 	last_open_at = 0;
 	fail_streak = 0;
+	reconnect_gen = 0;
+	cancel_live_connect: (() => void) | null = null;
 	prompt_reconnect_timer: ReturnType<typeof setTimeout> | null = null;
 	session_resumption_handle: string | null = null;
 	_user_id = '';
@@ -355,6 +357,11 @@ export class VoiceState {
 		this.log('cleanup: starting');
 		this.live_wanted = false;
 		this.session_gen++;
+		this.reconnect_gen++;
+		this.cancel_live_connect?.();
+		this.cancel_live_connect = null;
+		this.session_resumption_handle = null;
+		this.last_open_at = 0;
 		this.gemini_live_closing = true;
 		this.gemini_live_healthy = false;
 		this.recording = false;
@@ -432,9 +439,11 @@ export class VoiceState {
 			this.pending_quiet = false;
 			this.interrupt_audio();
 			this.apply_speaker_gain();
-			try {
-				this.gemini_live_session?.sendRealtimeInput({ text: 'quiet mode on' });
-			} catch {}
+			if (this.gemini_live_can_send()) {
+				try {
+					this.gemini_live_session.sendRealtimeInput({ text: 'quiet mode on' });
+				} catch {}
+			}
 		}
 	}
 
@@ -556,16 +565,15 @@ export class VoiceState {
 	async connectLive() {
 		if (this.connecting) return;
 		this.connecting = true;
+		this.gemini_live_healthy = false;
+		this.recording = false;
 		const gen = ++this.session_gen;
+		let setup_timer: ReturnType<typeof setTimeout> | undefined;
 		try {
 			this.add_toast('Connecting voice...');
-			let key = this.gemini_key;
-			if (!key) {
-				const res = await fetch('/api/voice/gemini-live/key');
-				const d = await res.json();
-				key = d.k;
-			}
-			if (!key) throw new Error('No API key available');
+			let key = this.gemini_key.trim();
+			if (gen !== this.session_gen || !this.live_wanted) return;
+			const cfg = this.live_cfg();
 
 			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 			const audioCtx = new AudioContext();
@@ -628,77 +636,106 @@ export class VoiceState {
 			}
 
 			const { GoogleGenAI } = await import('@google/genai');
+			if (!key) {
+				const res = await fetch('/api/voice/gemini-live/key', {
+					signal: AbortSignal.timeout(15000)
+				});
+				const d = (await res.json()) as {
+					k?: string; // single-use voice token
+					e?: string; // public error
+				};
+				if (!res.ok || typeof d.k !== 'string' || !d.k.trim()) {
+					throw new Error(d.e || 'voice authentication unavailable');
+				}
+				key = d.k.trim();
+			}
+			if (gen !== this.session_gen || !this.live_wanted) return;
 			const ai = new GoogleGenAI({ apiKey: key, httpOptions: { apiVersion: 'v1alpha' } });
-			let session: any;
-			session = await ai.live.connect({
-				model: this.model,
-				callbacks: {
-					onopen: () => {
-						if (gen !== this.session_gen) return;
-						this.gemini_live_healthy = true;
-						this.recording = true;
-						this.last_open_at = Date.now();
-						this.fail_streak = 0;
-						this.applied_live_cfg = this.live_cfg();
-						if ('mediaSession' in navigator) {
-							try {
-								navigator.mediaSession.setActionHandler('play', () => this.toggleMicMute());
-								navigator.mediaSession.setActionHandler('pause', () => this.toggleMicMute());
-							} catch {}
-						}
-						if (!this.reconnecting) {
-							this.add_toast('Voice connected');
-							play('sparkle');
-						}
-					},
-					onmessage: (msg: any) => {
-						if (gen !== this.session_gen) return;
-						this.gemini_live_handle(msg);
-					},
-					onerror: (e: any) => {
-						if (gen !== this.session_gen) return;
-						this.log(
-							'onerror code=' +
-								e?.code +
-								' reason=' +
-								e?.reason +
-								' message=' +
-								e?.message +
-								' error=' +
-								(e?.error?.message ?? e?.error ?? '')
-						);
-						this.handle_disconnect('error');
-					},
-					onclose: (e?: any) => {
-						if (gen !== this.session_gen) return;
-						this.log(
-							'onclose code=' + e?.code + ' reason="' + e?.reason + '" wasClean=' + e?.wasClean
-						);
-						this.handle_disconnect('close');
-					}
-				},
-				config: {
-					responseModalities: ['AUDIO'] as any,
-					speechConfig: {
-						voiceConfig: {
-							prebuiltVoiceConfig: { voiceName: this.voice_name }
-						}
-					} as any,
-					systemInstruction: {
-						parts: [
-							{
-								text: `${this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS}\n\n${this.notes_context_block()}`
-							}
-						]
-					} as any,
-					tools: get_tool_declarations(),
-					contextWindowCompression: { slidingWindow: {} },
-					sessionResumption: this.session_resumption_handle
-						? ({ handle: this.session_resumption_handle } as any)
-						: {}
-				} as any
+			let setup_complete!: () => void;
+			const setup = new Promise<void>((resolve) => {
+				setup_complete = resolve;
 			});
-			if (gen !== this.session_gen || !this.live_wanted) {
+			const cancelled = new Promise<never>((_, reject) => {
+				this.cancel_live_connect = () => reject(new Error('voice connection interrupted'));
+			});
+			setup_timer = setTimeout(() => {
+				if (gen === this.session_gen) {
+					this.handle_disconnect({ message: 'voice connection timed out' });
+				}
+			}, 15000);
+			const [session] = await Promise.race([
+				Promise.all([
+					ai.live
+						.connect({
+							model: this.model,
+							callbacks: {
+								onopen: () => {},
+								onmessage: (msg: any) => {
+									if (gen !== this.session_gen) return;
+									if (msg.setupComplete) setup_complete();
+									this.gemini_live_handle(msg);
+								},
+								onerror: (e: any) => {
+									if (gen !== this.session_gen) return;
+									this.log(
+										'onerror code=' +
+											e?.code +
+											' reason=' +
+											e?.reason +
+											' message=' +
+											e?.message +
+											' error=' +
+											(e?.error?.message ?? e?.error ?? '')
+									);
+									this.handle_disconnect(e);
+								},
+								onclose: (e?: any) => {
+									if (gen !== this.session_gen) return;
+									this.log(
+										'onclose code=' +
+											e?.code +
+											' reason="' +
+											e?.reason +
+											'" wasClean=' +
+											e?.wasClean
+									);
+									this.handle_disconnect(e);
+								}
+							},
+							config: {
+								responseModalities: ['AUDIO'] as any,
+								speechConfig: {
+									voiceConfig: {
+										prebuiltVoiceConfig: { voiceName: this.voice_name }
+									}
+								} as any,
+								systemInstruction: {
+									parts: [
+										{
+											text: `${this.system_prompt ? `${SYS}\n\n${this.system_prompt}` : SYS}\n\n${this.notes_context_block()}`
+										}
+									]
+								} as any,
+								tools: get_tool_declarations(),
+								contextWindowCompression: { slidingWindow: {} },
+								sessionResumption: this.session_resumption_handle
+									? ({ handle: this.session_resumption_handle } as any)
+									: {}
+							} as any
+						})
+						.then((session) => {
+							if (gen !== this.session_gen || !this.live_wanted || this.pending_reconnect) {
+								session.close();
+							} else {
+								this.gemini_live_session = session;
+							}
+							return session;
+						}),
+					setup
+				]),
+				cancelled
+			]);
+			if (gen !== this.session_gen || !this.live_wanted || this.pending_reconnect) {
 				try {
 					session.close();
 				} catch {}
@@ -706,6 +743,24 @@ export class VoiceState {
 				return;
 			}
 			this.gemini_live_session = session;
+			this.gemini_live_healthy = true;
+			this.recording = true;
+			this.last_open_at = Date.now();
+			this.applied_live_cfg = cfg;
+			if (!this.gemini_live_can_send()) {
+				this.handle_disconnect();
+				return;
+			}
+			if ('mediaSession' in navigator) {
+				try {
+					navigator.mediaSession.setActionHandler('play', () => this.toggleMicMute());
+					navigator.mediaSession.setActionHandler('pause', () => this.toggleMicMute());
+				} catch {}
+			}
+			if (!this.reconnecting) {
+				this.add_toast('Voice connected');
+				play('sparkle');
+			}
 			const msgs = this.chat_messages.filter((m) => m.content);
 			const initial =
 				msgs.length > 0
@@ -718,7 +773,7 @@ export class VoiceState {
 				session.sendRealtimeInput({ text: initial });
 			} catch {}
 		} catch (e) {
-			if (gen !== this.session_gen) throw e;
+			if (gen !== this.session_gen || this.pending_reconnect) return;
 			if (e instanceof DOMException && e.name === 'NotFoundError') {
 				try {
 					const devices = await navigator.mediaDevices.enumerateDevices();
@@ -737,76 +792,83 @@ export class VoiceState {
 			}
 			this.live_wanted = false;
 			this.cleanup();
-			throw e;
 		} finally {
+			clearTimeout(setup_timer);
 			if (gen === this.session_gen) {
+				this.cancel_live_connect = null;
 				this.connecting = false;
-				if (this.pending_reconnect) {
-					this.pending_reconnect = false;
+				if (this.pending_reconnect && !this.reconnecting) {
 					this.trigger_reconnect();
 				}
 			}
 		}
 	}
 
-	handle_disconnect(_reason: string) {
+	handle_disconnect(e?: { code?: number; reason?: string; message?: string }) {
+		this.gemini_live_healthy = false;
+		this.recording = false;
+		if (e?.code === 1008 || e?.code === 1007) {
+			this.add_toast(
+				/auth|credential/i.test(e.reason || '')
+					? 'voice authentication failed — check the gemini api key'
+					: 'voice connection rejected: ' + (e.reason || 'check voice settings'),
+				'e'
+			);
+			this.cleanup();
+			return;
+		}
 		if (this.connecting) {
 			this.pending_reconnect = true;
+			this.cancel_live_connect?.();
 			return;
 		}
 		this.trigger_reconnect();
 	}
 
 	trigger_reconnect() {
-		if (!this.live_wanted || this.gemini_live_closing || this.reconnecting || this.connecting)
-			return;
-		this.reconnecting = true;
+		if (!this.live_wanted || this.gemini_live_closing) return;
+		this.pending_reconnect = true;
 		this.gemini_live_healthy = false;
 		this.recording = false;
-		play('bloom');
-		this.auto_reconnect();
+		if (this.reconnecting || this.connecting) return;
+		void this.auto_reconnect();
 	}
 
 	async auto_reconnect() {
-		this.interrupt_audio();
-		this.drop_audio_graph();
-
-		const session = this.gemini_live_session;
-		this.gemini_live_session = null;
-		this.session_gen++;
-		if (session) {
-			try {
-				session.close();
-			} catch {}
-		}
-
-		this.gemini_live_closing = false;
-		this.goaway_received = false;
-
-		const lived = this.last_open_at ? Date.now() - this.last_open_at : 0;
-		this.fail_streak = lived > 15000 ? 1 : this.fail_streak + 1;
-		if (this.fail_streak > 5) {
-			this.add_toast('Voice dropped — tap the mic to retry', 'e');
-			this.live_wanted = false;
-			this.reconnecting = false;
-			this.cleanup();
-			return;
-		}
-		const wait = this.fail_streak <= 1 ? 0 : Math.min(8000, 400 * 2 ** (this.fail_streak - 2));
-		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-		if (!this.live_wanted) {
-			this.reconnecting = false;
-			return;
-		}
-
+		if (this.reconnecting) return;
+		this.reconnecting = true;
+		const gen = ++this.reconnect_gen;
 		try {
-			await this.connectLive();
-		} catch {
-			if (!this.live_wanted) return;
-			this.add_toast('Reconnect failed', 'e');
-			this.cleanup();
+			while (gen === this.reconnect_gen && this.live_wanted && this.pending_reconnect) {
+				this.pending_reconnect = false;
+				this.interrupt_audio();
+				this.drop_audio_graph();
+				const session = this.gemini_live_session;
+				this.gemini_live_session = null;
+				this.session_gen++;
+				if (session) {
+					try {
+						session.close();
+					} catch {}
+				}
+				if (this.live_cfg() !== this.applied_live_cfg) this.session_resumption_handle = null;
+				this.gemini_live_closing = false;
+				this.goaway_received = false;
+				this.fail_streak =
+					this.last_open_at && Date.now() - this.last_open_at > 15000 ? 1 : this.fail_streak + 1;
+				this.last_open_at = 0;
+				if (this.fail_streak > 5) {
+					this.add_toast('voice dropped — tap the mic to retry', 'e');
+					this.cleanup();
+					return;
+				}
+				const wait = this.fail_streak <= 1 ? 0 : Math.min(8000, 400 * 2 ** (this.fail_streak - 2));
+				if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+				if (gen !== this.reconnect_gen || !this.live_wanted) return;
+				await this.connectLive();
+			}
 		} finally {
-			this.reconnecting = false;
+			if (gen === this.reconnect_gen) this.reconnecting = false;
 		}
 	}
 
@@ -881,7 +943,7 @@ export class VoiceState {
 		let binary = '';
 		for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
 		try {
-			if (!this.gemini_live_closing && this.gemini_live_session) {
+			if (this.gemini_live_can_send()) {
 				this.gemini_live_session.sendRealtimeInput({
 					audio: { data: btoa(binary), mimeType: 'audio/pcm;rate=16000' }
 				});
@@ -894,7 +956,8 @@ export class VoiceState {
 			this.gemini_live_session &&
 			this.recording &&
 			this.gemini_live_healthy &&
-			!this.gemini_live_closing
+			!this.gemini_live_closing &&
+			this.gemini_live_session.conn?.ws?.readyState === WebSocket.OPEN
 		);
 	}
 
@@ -1298,9 +1361,11 @@ export class VoiceState {
 				this.pending_quiet = false;
 				this.quiet_mode = true;
 				this.apply_speaker_gain();
-				try {
-					this.gemini_live_session?.sendRealtimeInput({ text: 'quiet mode on' });
-				} catch {}
+				if (this.gemini_live_can_send()) {
+					try {
+						this.gemini_live_session.sendRealtimeInput({ text: 'quiet mode on' });
+					} catch {}
+				}
 			}
 			this.output_turn_active = false;
 		}
@@ -1375,6 +1440,7 @@ export class VoiceState {
 			if (t)
 				parts.push({ text: hidden_prefix ? `${hidden_prefix}\n\nUser: ${send_text}` : send_text });
 			for (const p of parts) {
+				if (!this.gemini_live_can_send()) break;
 				this.gemini_live_session.sendRealtimeInput(p);
 			}
 		} catch {}
